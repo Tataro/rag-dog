@@ -19,14 +19,32 @@ class Block:
 def parse(path: Path, mime_type: str) -> list[Block]:
     ext = path.suffix.lower()
     if ext == ".pdf" or mime_type == "application/pdf":
-        return _parse_pdf(path)
-    if ext == ".docx" or mime_type in {
+        blocks = _parse_pdf(path)
+    elif ext == ".docx" or mime_type in {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     }:
-        return _parse_docx(path)
-    if ext in {".md", ".markdown"} or mime_type == "text/markdown":
-        return _parse_markdown(path)
-    return _parse_text(path)
+        blocks = _parse_docx(path)
+    elif ext in {".md", ".markdown"} or mime_type == "text/markdown":
+        blocks = _parse_markdown(path)
+    else:
+        blocks = _parse_text(path)
+
+    # Strip NULL bytes (Postgres TEXT rejects them) and drop empty blocks.
+    # pypdf sometimes emits \x00 in Thai / CJK PDF extraction.
+    out: list[Block] = []
+    for b in blocks:
+        text = _clean(b.text)
+        if not text:
+            continue
+        out.append(Block(text=text, page=b.page, section=_clean(b.section) if b.section else None))
+    return out
+
+
+def _clean(s: str) -> str:
+    # \x00 breaks Postgres; other ASCII control chars (except tab/newline/CR)
+    # are noise from broken PDF extraction.
+    s = s.replace("\x00", "")
+    return "".join(c for c in s if c >= " " or c in "\t\n\r").strip()
 
 
 def _parse_pdf(path: Path) -> list[Block]:
