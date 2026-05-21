@@ -1,5 +1,6 @@
 """End-to-end query: resolve conversation → rewrite → embed → retrieve → generate → persist."""
 import logging
+import re
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -14,6 +15,8 @@ from ..retrieval.search import Hit, search
 from ..schemas import Citation
 from .llm import chat
 from .prompt import SYSTEM, build_user_prompt, cited_markers
+
+_MARKER_RE = re.compile(r"\s*\[\d+\]")
 
 log = logging.getLogger(__name__)
 
@@ -37,11 +40,19 @@ async def answer_query(
     embedding = await embed_text(rewritten)
     hits = await search(session, embedding)
 
+    # Strip citation markers from prior assistant turns — they're noise for
+    # generation context and encourage the model to mimic earlier answers.
+    sanitized_history = [
+        {"role": m["role"], "content": _MARKER_RE.sub("", m["content"]).strip()}
+        for m in history[-settings.history_turns * 2 :]
+    ]
+
     messages = [{"role": "system", "content": SYSTEM}]
-    messages.extend(history[-settings.history_turns * 2 :])
+    messages.extend(sanitized_history)
     messages.append({"role": "user", "content": build_user_prompt(text, hits)})
 
-    answer = await chat(messages, temperature=0.2)
+    # temperature=0.1: prioritize instruction following over creativity.
+    answer = await chat(messages, temperature=0.1)
     citations = _build_citations(answer, hits)
 
     session.add(Message(conversation_id=convo.id, role="user", content=text))
