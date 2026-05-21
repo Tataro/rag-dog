@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ragdog-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ragdog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ragdog}
+      POSTGRES_DB: ${POSTGRES_DB:-ragdog}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ragdog} -d ${POSTGRES_DB:-ragdog}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ragdog-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    # On M-series Macs, Docker cannot use the Apple GPU — Ollama runs CPU-only
+    # in this container, which is fine for embeddings but slow for the 14B LLM.
+    # For best performance, install Ollama natively on macOS instead and skip
+    # this service: `brew install ollama && ollama serve`.
+
+  # Run only when you want bots reachable from the internet.
+  # Configure ops/cloudflared/config.yml first (see ops/cloudflared/README).
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ragdog-cloudflared
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    network_mode: host
+    command: tunnel --config /etc/cloudflared/config.yml --no-autoupdate run
+    volumes:
+      - ./ops/cloudflared:/etc/cloudflared:ro
+
+volumes:
+  pgdata:
+  ollama:

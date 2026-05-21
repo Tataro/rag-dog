@@ -1,0 +1,15 @@
+# Cloudflare Tunnel config — copy to config.yml and fill in.
+# After `cloudflared tunnel create rag-dog`, replace <TUNNEL-UUID> with the
+# generated UUID and put credentials-file under ops/cloudflared/.
+#
+# The key constraint: only `/webhook/*` is forwarded to localhost:8000.
+# Everything else returns 404 at the tunnel edge.
+
+tunnel: <TUNNEL-UUID>
+credentials-file: /etc/cloudflared/<TUNNEL-UUID>.json
+
+ingress:
+  - hostname: <YOUR-SUBDOMAIN>.example.com
+    path: ^/webhook/(telegram|line)/?$
+    service: http://localhost:8000
+  - service: http_status:404

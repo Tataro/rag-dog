@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# uv
+.uv-cache/
+
+# Node
+node_modules/
+.next/
+.turbo/
+.pnpm-store/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Uploads (user data — never commit)
+uploads/*
+!uploads/.gitkeep
+backend/uploads/
+
+
+# Docker volumes (when using bind mounts)
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Cloudflared
+ops/cloudflared/*.json
+ops/cloudflared/credentials.yml
