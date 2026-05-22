@@ -1,17 +1,18 @@
 """LINE webhook adapter.
 
 Verifies `X-Line-Signature` HMAC-SHA256, enforces the user-id allowlist,
-runs the shared query pipeline, and replies via the LINE Messaging API.
+runs the shared query pipeline in a background task, and replies via the LINE
+Messaging API.
 """
 import json
 import logging
+from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 
 from ..config import settings
-from ..db import get_session
+from ..db import SessionLocal
 from ..generation.pipeline import answer_query
 from ..security.verify import verify_line
 from .base import format_bot_reply
@@ -23,11 +24,11 @@ _LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply"
 _LINE_MAX_TEXT = 5000  # LINE text message hard limit
 
 
-@router.post("")
+@router.post("", responses={401: {"description": "bad line signature"}})
 async def line_webhook(
     request: Request,
-    x_line_signature: str | None = Header(default=None),
-    session: AsyncSession = Depends(get_session),
+    background: BackgroundTasks,
+    x_line_signature: Annotated[str | None, Header()] = None,
 ) -> dict:
     body = await request.body()
     if not verify_line(body, x_line_signature):
@@ -54,11 +55,19 @@ async def line_webhook(
             log.warning("line: dropping message from non-allowlisted user %s", user_id)
             continue
 
-        result = await answer_query(session, channel="line", external_id=user_id, text=text)
-        reply = format_bot_reply(result)[:_LINE_MAX_TEXT]
-        await _reply_line(reply_token, reply)
+        background.add_task(_handle_line_message, user_id, text, reply_token)
 
     return {"ok": True}
+
+
+async def _handle_line_message(user_id: str, text: str, reply_token: str) -> None:
+    try:
+        async with SessionLocal() as session:
+            result = await answer_query(session, channel="line", external_id=user_id, text=text)
+        reply = format_bot_reply(result)[:_LINE_MAX_TEXT]
+        await _reply_line(reply_token, reply)
+    except Exception:
+        log.exception("line: failed to handle message for user %s", user_id)
 
 
 async def _reply_line(reply_token: str, text: str) -> None:

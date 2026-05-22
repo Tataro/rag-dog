@@ -1,17 +1,17 @@
 """Telegram webhook adapter.
 
 Validates `X-Telegram-Bot-Api-Secret-Token`, enforces the chat-id allowlist,
-runs the same query pipeline as the web channel, and posts the reply via
-the Bot API.
+runs the same query pipeline as the web channel in a background task, and
+posts the reply via the Bot API.
 """
 import logging
+from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 
 from ..config import settings
-from ..db import get_session
+from ..db import SessionLocal
 from ..generation.pipeline import answer_query
 from ..security.verify import verify_telegram
 from .base import format_bot_reply
@@ -20,11 +20,11 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-@router.post("")
+@router.post("", responses={401: {"description": "bad telegram signature"}})
 async def telegram_webhook(
     request: Request,
-    x_telegram_bot_api_secret_token: str | None = Header(default=None),
-    session: AsyncSession = Depends(get_session),
+    background: BackgroundTasks,
+    x_telegram_bot_api_secret_token: Annotated[str | None, Header()] = None,
 ) -> dict:
     if not verify_telegram(x_telegram_bot_api_secret_token):
         raise HTTPException(status_code=401, detail="bad telegram signature")
@@ -44,10 +44,23 @@ async def telegram_webhook(
         log.warning("telegram: dropping message from non-allowlisted chat %s", chat_id)
         return {"ok": True}
 
-    result = await answer_query(session, channel="telegram", external_id=chat_id, text=text)
-    reply = format_bot_reply(result)
-    await _send_telegram_message(chat_id, reply, reply_to=message.get("message_id"))
+    background.add_task(
+        _handle_telegram_message,
+        chat_id,
+        text,
+        message.get("message_id"),
+    )
     return {"ok": True}
+
+
+async def _handle_telegram_message(chat_id: str, text: str, reply_to: int | None) -> None:
+    try:
+        async with SessionLocal() as session:
+            result = await answer_query(session, channel="telegram", external_id=chat_id, text=text)
+        reply = format_bot_reply(result)
+        await _send_telegram_message(chat_id, reply, reply_to=reply_to)
+    except Exception:
+        log.exception("telegram: failed to handle message for chat %s", chat_id)
 
 
 async def _send_telegram_message(chat_id: str, text: str, *, reply_to: int | None) -> None:

@@ -40,3 +40,4 @@ Thumbs.db
 # Cloudflared
 ops/cloudflared/*.json
 ops/cloudflared/credentials.yml
+ops/cloudflared/config.yml
