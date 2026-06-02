@@ -7,7 +7,7 @@ os.environ.setdefault("APP_DATABASE_URL", "postgresql+asyncpg://ragdog_app:ragdo
 os.environ.setdefault("SESSION_JWT_SECRET", "test-secret")
 os.environ.setdefault("GOOGLE_CLIENT_IDS", "test-client.apps.googleusercontent.com")
 os.environ.setdefault("BOOTSTRAP_ADMIN_EMAILS", "boss@example.com")
-os.environ.setdefault("S3_ENDPOINT_URL", "http://localhost:9000")
+os.environ.setdefault("S3_ENDPOINT_URL", "")  # empty → no custom endpoint; moto patches at the botocore layer
 os.environ.setdefault("S3_BUCKET", "ragdog-documents-test")
 os.environ.setdefault("S3_ACCESS_KEY", "testing")
 os.environ.setdefault("S3_SECRET_KEY", "testing")
