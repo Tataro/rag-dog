@@ -33,3 +33,21 @@ export interface ChatTurn {
   content: string;
   citations?: Citation[];
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  picture: string | null;
+  is_admin: boolean;
+}
+
+export interface LoginResponse {
+  session_token: string;
+  user: User;
+}
+
+export interface AllowedEmail {
+  email: string;
+  created_at: string;
+}

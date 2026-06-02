@@ -26,7 +26,7 @@
 - Add Vitest: `frontend/package.json`, `frontend/vitest.config.ts`
 - Test: `frontend/src/lib/auth-storage.test.ts`, `frontend/src/lib/api.test.ts`
 
-- [ ] **Step 1: Add Vitest (framework-agnostic unit runner)**
+- [x] **Step 1: Add Vitest (framework-agnostic unit runner)**
 
 These units are plain TS, so they don't need the Next runtime. Install:
 ```bash
@@ -43,7 +43,7 @@ export default defineConfig({
 ```
 Add to `frontend/package.json` `"scripts"`: `"test": "vitest run"`.
 
-- [ ] **Step 2: Extend types**
+- [x] **Step 2: Extend types**
 
 In `frontend/src/lib/types.ts` add:
 ```ts
@@ -66,7 +66,7 @@ export interface AllowedEmail {
 }
 ```
 
-- [ ] **Step 3: Write failing tests for the token store**
+- [x] **Step 3: Write failing tests for the token store**
 
 Create `frontend/src/lib/auth-storage.test.ts`:
 ```ts
@@ -99,9 +99,9 @@ describe("auth-storage", () => {
 });
 ```
 
-- [ ] **Step 4: Run it (red)** — `cd frontend && pnpm test` → FAIL (no `auth-storage`).
+- [x] **Step 4: Run it (red)** — `cd frontend && pnpm test` → FAIL (no `auth-storage`).
 
-- [ ] **Step 5: Implement the token store**
+- [x] **Step 5: Implement the token store**
 
 Create `frontend/src/lib/auth-storage.ts`:
 ```ts
@@ -134,9 +134,9 @@ export function clearAuth(): void {
 }
 ```
 
-- [ ] **Step 6: Run it (green)** — `pnpm test` → PASS.
+- [x] **Step 6: Run it (green)** — `pnpm test` → PASS.
 
-- [ ] **Step 7: Write failing tests for the API client auth header**
+- [x] **Step 7: Write failing tests for the API client auth header**
 
 Create `frontend/src/lib/api.test.ts`:
 ```ts
@@ -168,9 +168,9 @@ describe("api client", () => {
 });
 ```
 
-- [ ] **Step 8: Run it (red)** — `pnpm test` → FAIL.
+- [x] **Step 8: Run it (red)** — `pnpm test` → FAIL.
 
-- [ ] **Step 9: Rewrite the API client**
+- [x] **Step 9: Rewrite the API client**
 
 Replace `frontend/src/lib/api.ts` with:
 ```ts
@@ -243,11 +243,11 @@ export const api = {
 };
 ```
 
-- [ ] **Step 10: Delete `session.ts`** — `rm frontend/src/lib/session.ts`. (It's replaced; Task 3 removes its last caller in `ChatThread`.)
+- [x] **Step 10: Delete `session.ts`** — `rm frontend/src/lib/session.ts`. (It's replaced; Task 3 removes its last caller in `ChatThread`.)
 
-- [ ] **Step 11: Run it (green)** — `pnpm test` → PASS (all). Then `pnpm exec tsc --noEmit` — expect type errors ONLY in files that still import `session.ts` or call `query(text, sessionId)` (fixed in Task 3). Note them; don't fix here.
+- [x] **Step 11: Run it (green)** — `pnpm test` → PASS (all). Then `pnpm exec tsc --noEmit` — expect type errors ONLY in files that still import `session.ts` or call `query(text, sessionId)` (fixed in Task 3). Note them; don't fix here.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 ```bash
 git add frontend/src/lib frontend/vitest.config.ts frontend/package.json frontend/pnpm-lock.yaml
 git commit -m "feat(web): authenticated API client, token store, Vitest units"
