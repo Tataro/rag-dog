@@ -1,6 +1,6 @@
 # 0003 — Cloudflare Tunnel exposes only webhook paths
 
-**Status**: Accepted
+**Status**: Superseded by [0004](0004-multi-user-production-pivot.md)
 **Date**: 2026-05-21
 
 ## Context

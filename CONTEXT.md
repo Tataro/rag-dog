@@ -2,9 +2,21 @@
 
 Terms that have a specific meaning in this project. Implementation details belong in code, not here.
 
+## User
+
+A human with an identity in the system, established by logging in with Google. Owns private Documents and Conversations that must never be visible to another User. Replaces the original single-user assumption: every Document, Chunk, and Conversation now belongs to exactly one User, and retrieval is always scoped to the asking User.
+
+A User is provisioned only after an Admin has added their email to the allowlist (closed access — no open signup). The first Google sign-in whose verified email matches an allowlisted entry creates the User; sign-ins from non-allowlisted emails are rejected.
+
+## Admin
+
+A User with the privilege to manage the allowlist — adding and removing the emails permitted to become Users. The first Admin is bootstrapped when the system is first set up; thereafter Admins are designated from existing Users.
+
+> The **Conversation** and **Channel** terms below predate the User concept and still describe the single-user model. They will be revised once we resolve how Telegram/Line identities map to a User.
+
 ## Document
 
-A file uploaded by the user. Lives on disk under `uploads/` and as a row in the `documents` table. Has a lifecycle: `uploading → processing → ready` (or `failed`). A Document is a unit of upload, not a unit of retrieval.
+A file uploaded by a User. Lives on disk under `uploads/` and as a row in the `documents` table. Has a lifecycle: `uploading → processing → ready` (or `failed`). A Document is a unit of upload, not a unit of retrieval. Owned by exactly one User.
 
 ## Chunk
 
@@ -12,11 +24,11 @@ A contiguous span of text extracted from a Document during ingestion, paired wit
 
 ## Conversation
 
-A continuous thread of messages between the user and the assistant on a single channel. Keyed by `(channel, external_id)` — e.g. `(telegram, 123456789)` is one Conversation, `(line, U abc…)` is another. Conversations on different channels are independent even though the underlying user is the same human; we don't link them in v1.
+A thread of messages between a User and the assistant. Owned by a User and identified by its own id — it is not tied to a device or channel. The same Conversation is visible from all of that User's authenticated clients (web and mobile); starting a chat on mobile and continuing it on web is one Conversation. A User may have many Conversations.
 
 ## Channel
 
-A surface through which the user talks to the assistant. Three channels exist: `web` (the Next.js UI), `telegram`, `line`. Each Channel is responsible for translating its native message format to/from the shared query pipeline.
+A surface through which a User talks to the assistant. The multi-user launch ships two: `web` (the Next.js UI) and `mobile` (the native app). Both are authenticated clients that identify the User via their Google session, so the backend always knows whose Documents to search. The single-user-era `telegram` and `line` bots are descoped pending an account-linking design (deferred) — see ADR 0004 (`docs/adr/0004-multi-user-production-pivot.md`).
 
 ## Citation
 
