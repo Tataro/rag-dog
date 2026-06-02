@@ -5,10 +5,13 @@ request/user context. Each DB phase runs in its own short transaction with
 app.user_id set; the slow parse/embed work happens outside any transaction.
 """
 import logging
+import os
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
+from .. import storage
 from ..db import user_session
 from ..models import Chunk as ChunkModel
 from ..models import Document
@@ -33,7 +36,19 @@ async def run(document_id: UUID, owner_id: UUID) -> None:
         storage_path, mime_type, filename = doc.storage_path, doc.mime_type, doc.filename
 
     try:
-        blocks = parse(Path(storage_path), mime_type)
+        data = await storage.get_bytes(storage_path)
+        ext = os.path.splitext(storage_path)[1]
+        # mkstemp so tmp_path is bound before any write — a failed write then can't
+        # leak the file (the finally below always runs). Close the fd before parse
+        # reads the path (some platforms can't reopen an still-open temp file).
+        fd, tmp_name = tempfile.mkstemp(suffix=ext)
+        tmp_path = Path(tmp_name)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+            blocks = parse(tmp_path, mime_type)
+        finally:
+            tmp_path.unlink(missing_ok=True)
         if not blocks:
             raise ValueError("no extractable text in document")
         chunks = chunk_blocks(blocks)
