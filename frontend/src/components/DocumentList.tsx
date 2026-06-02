@@ -1,8 +1,9 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { useEffect } from "react";
-import { api } from "@/lib/api";
+import { Download, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { api, UnauthorizedError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { formatBytes, formatRelative } from "@/lib/format";
 import type { DocumentOut } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
@@ -13,6 +14,10 @@ interface Props {
 }
 
 export function DocumentList({ docs, onChanged }: Props) {
+  const { logout } = useAuth();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
   // Poll for status updates while anything is in flight.
   useEffect(() => {
     const pending = docs.some(
@@ -37,40 +42,78 @@ export function DocumentList({ docs, onChanged }: Props) {
     onChanged();
   }
 
+  async function handleDownload(doc: DocumentOut) {
+    setDownloadingId(doc.id);
+    setDownloadError(null);
+    try {
+      const blob = await api.downloadDocument(doc.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      if (e instanceof UnauthorizedError) {
+        logout();
+      } else {
+        setDownloadError("download failed");
+      }
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   return (
-    <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
-      {docs.map((d) => (
-        <li
-          key={d.id}
-          className="px-4 py-3 flex items-center gap-3 text-sm"
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-medium truncate">{d.filename}</span>
-              <StatusBadge status={d.status} />
-            </div>
-            <div className="text-xs text-zinc-500 mt-0.5">
-              {formatBytes(d.size_bytes)}
-              {d.page_count !== null && ` · ${d.page_count} pages`}
-              {" · "}
-              uploaded {formatRelative(d.created_at)}
-            </div>
-            {d.status === "failed" && d.error && (
-              <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-mono">
-                {d.error}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => handleDelete(d.id)}
-            className="p-1.5 rounded-md text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-            title="Delete"
+    <div>
+      {downloadError && (
+        <p className="mb-2 text-sm text-rose-600 dark:text-rose-400">
+          {downloadError}
+        </p>
+      )}
+      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
+        {docs.map((d) => (
+          <li
+            key={d.id}
+            className="px-4 py-3 flex items-center gap-3 text-sm"
           >
-            <Trash2 size={16} />
-          </button>
-        </li>
-      ))}
-    </ul>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate">{d.filename}</span>
+                <StatusBadge status={d.status} />
+              </div>
+              <div className="text-xs text-zinc-500 mt-0.5">
+                {formatBytes(d.size_bytes)}
+                {d.page_count !== null && ` · ${d.page_count} pages`}
+                {" · "}
+                uploaded {formatRelative(d.created_at)}
+              </div>
+              {d.status === "failed" && d.error && (
+                <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-mono">
+                  {d.error}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleDownload(d)}
+              disabled={d.status !== "ready" || downloadingId === d.id}
+              className="p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Download"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(d.id)}
+              className="p-1.5 rounded-md text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+              title="Delete"
+            >
+              <Trash2 size={16} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

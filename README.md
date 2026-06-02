@@ -60,6 +60,20 @@ uploads/        (removed) original document files now stored in MinIO object sto
 CONTEXT.md      Domain glossary
 ```
 
+## Web UI environment variables
+
+Create `frontend/.env.local` (never committed) with:
+
+```
+# URL of the FastAPI backend (no trailing slash)
+NEXT_PUBLIC_API_BASE=http://localhost:8000
+
+# Google OAuth 2.0 Web Client ID (from Google Cloud Console → APIs & Services → Credentials)
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com
+```
+
+> **Important:** the same web client ID must also appear in the backend's `GOOGLE_CLIENT_IDS` list (comma-separated) so the backend will accept tokens issued by it.
+
 ## Out of scope for v1
 
 OCR, hybrid retrieval, reranking, multi-user auth, document tags, streaming responses, production job queue. See the [plan](.claude/../README.md) for details.
