@@ -36,6 +36,11 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    google_client_ids: str = ""  # comma-separated OAuth client IDs (web + mobile) accepted as token audience
+    session_jwt_secret: str = "dev-insecure-change-me"
+    session_jwt_ttl_seconds: int = 60 * 60 * 24 * 30  # 30 days
+    bootstrap_admin_emails: str = ""  # comma-separated; implicitly allowed + admin on first login
+
     @property
     def telegram_allowlist(self) -> set[str]:
         return {x.strip() for x in self.telegram_allowed_chat_ids.split(",") if x.strip()}
@@ -47,6 +52,14 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [x.strip() for x in self.cors_origins.split(",") if x.strip()]
+
+    @property
+    def google_client_id_list(self) -> list[str]:
+        return [x.strip() for x in self.google_client_ids.split(",") if x.strip()]
+
+    @property
+    def bootstrap_admin_set(self) -> set[str]:
+        return {x.strip().lower() for x in self.bootstrap_admin_emails.split(",") if x.strip()}
 
 
 settings = Settings()
