@@ -21,7 +21,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const pending = loadUser() && loadToken()
       ? api.me().then(setUser).catch((e) => {
-          if (e instanceof UnauthorizedError) { clearAuth(); setUser(null); }
+          if (e instanceof UnauthorizedError) {
+            clearAuth();
+            setUser(null);
+          } else {
+            // Transient backend error (network/5xx): keep the cached user rather
+            // than forcing a spurious sign-out; the token is still valid.
+            setUser(loadUser());
+          }
         })
       : Promise.resolve();
     pending.finally(() => setReady(true));

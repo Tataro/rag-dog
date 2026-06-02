@@ -266,7 +266,7 @@ git commit -m "feat(web): authenticated API client, token store, Vitest units"
 - Modify: `frontend/src/app/layout.tsx` (wrap children in the provider + gate)
 - Modify: `frontend/.env.local` / document `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 
-- [ ] **Step 1: Env + Google client ID**
+- [x] **Step 1: Env + Google client ID**
 
 Create/append `frontend/.env.local` (gitignored) and document in the README:
 ```
@@ -275,7 +275,7 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-web-oauth-client-id>.apps.googleusercontent.c
 ```
 The same client ID must be in the backend's `GOOGLE_CLIENT_IDS`.
 
-- [ ] **Step 2: Auth context**
+- [x] **Step 2: Auth context**
 
 Create `frontend/src/lib/auth-context.tsx` (verify `"use client"` placement against the installed docs):
 ```tsx
@@ -331,7 +331,7 @@ export function useAuth(): AuthState {
 ```
 > NOTE: `useCallback` is imported as `useCallback` — fix the import name (`import { createContext, useCallback, useContext, useEffect, useState } from "react"`). Double-check React 19 export names if tsc complains.
 
-- [ ] **Step 3: Google sign-in button (Google Identity Services)**
+- [x] **Step 3: Google sign-in button (Google Identity Services)**
 
 Create `frontend/src/components/GoogleSignInButton.tsx`. Loads the GIS script and renders the Google button; on credential callback, calls `loginWithGoogle(response.credential)` (the credential is the Google ID token).
 ```tsx
@@ -374,7 +374,7 @@ export function GoogleSignInButton() {
 }
 ```
 
-- [ ] **Step 4: Auth gate**
+- [x] **Step 4: Auth gate**
 
 Create `frontend/src/components/AuthGate.tsx`:
 ```tsx
@@ -401,7 +401,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 }
 ```
 
-- [ ] **Step 5: Wrap the app**
+- [x] **Step 5: Wrap the app**
 
 Modify `frontend/src/app/layout.tsx` to wrap the `<main>` content in `AuthProvider` + `AuthGate`. **Consult the installed docs** for whether providers go directly in the server `layout.tsx` (they can, since the provider is a client component) or need a separate `providers.tsx` client wrapper in THIS Next version. Keeping the existing `<Nav />`, the body becomes:
 ```tsx
@@ -412,9 +412,9 @@ Modify `frontend/src/app/layout.tsx` to wrap the `<main>` content in `AuthProvid
 ```
 Add the imports. If Next 16 requires providers in a dedicated `"use client"` module imported by the server layout, follow that pattern from the docs instead.
 
-- [ ] **Step 6: Verify** — `cd frontend && pnpm exec tsc --noEmit` (fix any React-19 import/type issues), `pnpm lint`, then `pnpm dev` and manually confirm: unauthenticated shows the Google button; signing in renders the app; reload stays signed in; clearing localStorage logs out.
+- [x] **Step 6: Verify** — `cd frontend && pnpm exec tsc --noEmit` (fix any React-19 import/type issues), `pnpm lint`, then `pnpm dev` and manually confirm: unauthenticated shows the Google button; signing in renders the app; reload stays signed in; clearing localStorage logs out.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 ```bash
 git add frontend/src/lib/auth-context.tsx frontend/src/components/GoogleSignInButton.tsx frontend/src/components/AuthGate.tsx frontend/src/app/layout.tsx
 git commit -m "feat(web): Google sign-in, auth context, and auth gate"
@@ -429,15 +429,15 @@ git commit -m "feat(web): Google sign-in, auth context, and auth gate"
 - Modify: `frontend/src/components/DocumentUploader.tsx` / `DocumentList.tsx` (already use `api.*`; just confirm they get auth via the client — they do — and handle `UnauthorizedError`)
 - Add a logout control to `frontend/src/components/Nav.tsx`
 
-- [ ] **Step 1: Read the current components** — read `ChatThread.tsx`, `DocumentUploader.tsx`, `DocumentList.tsx` fully. They already call `api.*`, which now carries the token, so most "auth" is automatic. The real change is in `ChatThread`: it imports `getSessionId`/`resetSession` from the deleted `session.ts` and calls `api.query(text, sessionId)`.
+- [x] **Step 1: Read the current components** — read `ChatThread.tsx`, `DocumentUploader.tsx`, `DocumentList.tsx` fully. They already call `api.*`, which now carries the token, so most "auth" is automatic. The real change is in `ChatThread`: it imports `getSessionId`/`resetSession` from the deleted `session.ts` and calls `api.query(text, sessionId)`.
 
-- [ ] **Step 2: Update `ChatThread`** — remove the `session.ts` import. Keep a React state `conversationId: string | null` (starts `null`). On send, call `api.query(text, conversationId)`; on response, `setConversationId(resp.conversation_id)`. A "New chat" button sets `conversationId` back to `null` and clears the visible turns. Wrap send in try/catch: on `UnauthorizedError`, call `useAuth().logout()` (the gate then shows sign-in). Preserve the existing rendering of turns + citations.
+- [x] **Step 2: Update `ChatThread`** — remove the `session.ts` import. Keep a React state `conversationId: string | null` (starts `null`). On send, call `api.query(text, conversationId)`; on response, `setConversationId(resp.conversation_id)`. A "New chat" button sets `conversationId` back to `null` and clears the visible turns. Wrap send in try/catch: on `UnauthorizedError`, call `useAuth().logout()` (the gate then shows sign-in). Preserve the existing rendering of turns + citations.
 
-- [ ] **Step 3: Add logout to `Nav`** — `Nav` is currently a server component (no hooks). Either make it a client component (`"use client"` — confirm the directive against the installed docs) or extract a small client `<UserMenu />` showing the user's email + a "Sign out" button calling `useAuth().logout()`. Prefer the small client child so `Nav` stays mostly as-is.
+- [x] **Step 3: Add logout to `Nav`** — `Nav` is currently a server component (no hooks). Either make it a client component (`"use client"` — confirm the directive against the installed docs) or extract a small client `<UserMenu />` showing the user's email + a "Sign out" button calling `useAuth().logout()`. Prefer the small client child so `Nav` stays mostly as-is.
 
-- [ ] **Step 4: Verify** — `pnpm exec tsc --noEmit` (should now be clean — no more `session.ts` references), `pnpm lint`, `pnpm test`. Manually: send a chat message (works, authenticated), confirm a follow-up reuses the same `conversation_id` (check the network tab), "New chat" starts a fresh one, sign out returns to the gate.
+- [x] **Step 4: Verify** — `pnpm exec tsc --noEmit` (should now be clean — no more `session.ts` references), `pnpm lint`, `pnpm test`. Manually: send a chat message (works, authenticated), confirm a follow-up reuses the same `conversation_id` (check the network tab), "New chat" starts a fresh one, sign out returns to the gate.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add frontend/src/components/ChatThread.tsx frontend/src/components/Nav.tsx
 git commit -m "feat(web): chat uses server conversations; nav logout; 401 handling"

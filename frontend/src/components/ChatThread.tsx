@@ -52,6 +52,7 @@ export function ChatThread() {
   }
 
   function handleReset() {
+    if (busy) return; // don't reset mid-request: a late response would restore the cleared chat
     if (turns.length > 0 && !confirm("Start a new conversation?")) return;
     setConversationId(null);
     setTurns([]);
@@ -88,7 +89,8 @@ export function ChatThread() {
         <button
           type="button"
           onClick={handleReset}
-          className="p-2 rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          disabled={busy}
+          className="p-2 rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-40"
           title="New conversation"
         >
           <RotateCcw size={18} />

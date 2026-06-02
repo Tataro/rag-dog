@@ -36,7 +36,10 @@ export function GoogleSignInButton() {
       if (ref.current) window.google?.accounts.id.renderButton(ref.current, { theme: "outline", size: "large" });
     };
     document.body.appendChild(script);
-    return () => { script.remove(); };
+    return () => {
+      script.onload = null; // prevent a stale load callback from rendering a duplicate button
+      script.remove();
+    };
   }, [loginWithGoogle]);
 
   return <div ref={ref} />;
