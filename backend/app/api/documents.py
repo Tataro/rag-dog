@@ -1,7 +1,11 @@
+import io
 import mimetypes
+from urllib.parse import quote
 from uuid import UUID, uuid4
 
+from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +20,22 @@ router = APIRouter()
 _ALLOWED_EXTS = {".pdf", ".md", ".markdown", ".txt", ".docx"}
 
 
+async def _get_doc_or_404(session: AsyncSession, document_id: UUID) -> Document:
+    # RLS scopes the lookup to the current user, so another user's document is
+    # indistinguishable from a missing one (both → 404).
+    doc = await session.get(Document, document_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="document not found")
+    return doc
+
+
+def _content_disposition(filename: str) -> str:
+    """RFC 6266 / 5987-safe disposition: an escaped ASCII fallback plus a UTF-8
+    `filename*` so non-ASCII names (e.g. Thai) and quotes don't break the header."""
+    ascii_fallback = filename.encode("ascii", "replace").decode("ascii").replace("\\", "_").replace('"', "_")
+    return f"inline; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(filename)}"
+
+
 @router.get("", response_model=list[DocumentOut])
 async def list_documents(session: AsyncSession = Depends(get_user_session)) -> list[Document]:
     stmt = select(Document).order_by(Document.created_at.desc())
@@ -26,10 +46,23 @@ async def list_documents(session: AsyncSession = Depends(get_user_session)) -> l
 async def get_document(
     document_id: UUID, session: AsyncSession = Depends(get_user_session)
 ) -> Document:
-    doc = await session.get(Document, document_id)
-    if doc is None:  # RLS makes another user's doc indistinguishable from missing.
-        raise HTTPException(status_code=404, detail="document not found")
-    return doc
+    return await _get_doc_or_404(session, document_id)
+
+
+@router.get("/{document_id}/file")
+async def download_document(
+    document_id: UUID, session: AsyncSession = Depends(get_user_session)
+) -> StreamingResponse:
+    doc = await _get_doc_or_404(session, document_id)
+    try:
+        data = await storage.get_bytes(doc.storage_path)
+    except ClientError as exc:  # object vanished from storage (lifecycle/manual delete)
+        raise HTTPException(status_code=404, detail="file not found in storage") from exc
+    return StreamingResponse(
+        io.BytesIO(data),
+        media_type=doc.mime_type,
+        headers={"Content-Disposition": _content_disposition(doc.filename)},
+    )
 
 
 @router.post("", response_model=DocumentOut, status_code=201)
@@ -80,9 +113,7 @@ async def upload_document(
 async def delete_document(
     document_id: UUID, session: AsyncSession = Depends(get_user_session)
 ) -> None:
-    doc = await session.get(Document, document_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="document not found")
+    doc = await _get_doc_or_404(session, document_id)
     await storage.delete_object(doc.storage_path)
     await session.delete(doc)
     # get_user_session commits at teardown.

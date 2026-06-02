@@ -66,3 +66,56 @@ async def test_upload_then_list_is_user_scoped(client, fake_google, monkeypatch,
 
     owner = await client.get("/api/documents", headers={"Authorization": f"Bearer {t1}"})
     assert len(owner.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_download_is_owner_only(client, fake_google, monkeypatch, s3):
+    from app.api import documents as docs_api
+    monkeypatch.setattr(docs_api.BackgroundTasks, "add_task", lambda *a, **k: None)
+
+    t1 = await _token(client, "boss@example.com")
+    up = await client.post(
+        "/api/documents",
+        files={"file": ("a.md", io.BytesIO(b"# secret"), "text/markdown")},
+        headers={"Authorization": f"Bearer {t1}"},
+    )
+    doc_id = up.json()["id"]
+
+    # Owner can download, with the right content type + disposition.
+    mine = await client.get(f"/api/documents/{doc_id}/file", headers={"Authorization": f"Bearer {t1}"})
+    assert mine.status_code == 200
+    assert mine.content == b"# secret"
+    assert mine.headers["content-type"].startswith("text/markdown")
+    assert "a.md" in mine.headers["content-disposition"]
+
+    # Another user cannot (RLS hides the row → 404).
+    from sqlalchemy import text as _text
+
+    from app.db import SessionLocal as _SL
+    async with _SL() as s:
+        await s.execute(_text("INSERT INTO allowed_emails (email) VALUES ('m@example.com')"))
+        await s.commit()
+    t2 = await _token(client, "m@example.com")
+    theirs = await client.get(f"/api/documents/{doc_id}/file", headers={"Authorization": f"Bearer {t2}"})
+    assert theirs.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_download_handles_unicode_and_quoted_filename(client, fake_google, monkeypatch, s3):
+    """A Thai/quoted filename must not break the Content-Disposition header."""
+    from app.api import documents as docs_api
+    monkeypatch.setattr(docs_api.BackgroundTasks, "add_task", lambda *a, **k: None)
+
+    t1 = await _token(client, "boss@example.com")
+    tricky = 'รายงาน "2024".md'
+    up = await client.post(
+        "/api/documents",
+        files={"file": (tricky, io.BytesIO(b"# hi"), "text/markdown")},
+        headers={"Authorization": f"Bearer {t1}"},
+    )
+    doc_id = up.json()["id"]
+    resp = await client.get(f"/api/documents/{doc_id}/file", headers={"Authorization": f"Bearer {t1}"})
+    assert resp.status_code == 200  # header built without raising/illegal value
+    cd = resp.headers["content-disposition"]
+    assert "filename*=UTF-8''" in cd  # RFC 5987 form carries the real (encoded) name
+    assert '"' not in cd.split("filename=", 1)[1].split(";", 1)[0].strip('"')  # ascii fallback has no raw quote
