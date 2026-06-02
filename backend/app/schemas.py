@@ -30,7 +30,7 @@ class Citation(BaseModel):
 
 class QueryRequest(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
-    session_id: str = Field(min_length=1, max_length=200)
+    conversation_id: UUID | None = None  # None starts a new conversation
 
 
 class QueryResponse(BaseModel):
