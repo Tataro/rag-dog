@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MessageSquare, FileText } from "lucide-react";
+import { UserMenu } from "./UserMenu";
 
 export function Nav() {
   return (
@@ -8,13 +9,14 @@ export function Nav() {
         <Link href="/" className="font-semibold tracking-tight">
           🐶 rag-dog
         </Link>
-        <div className="flex gap-1 ml-auto">
+        <div className="flex gap-1 ml-auto items-center">
           <NavLink href="/chat" icon={<MessageSquare size={16} />} label="Chat" />
           <NavLink
             href="/documents"
             icon={<FileText size={16} />}
             label="Documents"
           />
+          <UserMenu />
         </div>
       </div>
     </nav>

@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { api } from "@/lib/api";
-import { getSessionId, resetSession } from "@/lib/session";
+import { api, UnauthorizedError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { ChatTurn } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 
 export function ChatThread() {
+  const { logout } = useAuth();
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,13 +33,18 @@ export function ChatThread() {
     setTurns(next);
 
     try {
-      const res = await api.query(text, getSessionId());
+      const res = await api.query(text, conversationId);
+      setConversationId(res.conversation_id);
       setTurns([
         ...next,
         { role: "assistant", content: res.answer, citations: res.citations },
       ]);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "query failed");
+    } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        logout();
+        return;
+      }
+      setError(err instanceof Error ? err.message : "query failed");
       setTurns(next);
     } finally {
       setBusy(false);
@@ -46,7 +53,7 @@ export function ChatThread() {
 
   function handleReset() {
     if (turns.length > 0 && !confirm("Start a new conversation?")) return;
-    resetSession();
+    setConversationId(null);
     setTurns([]);
     setError(null);
   }
