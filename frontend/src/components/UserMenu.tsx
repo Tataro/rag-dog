@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
 export function UserMenu() {
@@ -11,6 +12,14 @@ export function UserMenu() {
       <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">
         {user.email}
       </span>
+      {user.is_admin && (
+        <Link
+          href="/admin"
+          className="px-3 py-1.5 rounded-md text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+        >
+          Admin
+        </Link>
+      )}
       <button
         type="button"
         onClick={logout}
