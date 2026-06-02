@@ -1,12 +1,11 @@
 import mimetypes
-import shutil
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import settings
+from .. import storage
 from ..deps import get_current_user, get_user_session
 from ..ingestion.pipeline import run as run_ingestion
 from ..models import Document, User
@@ -49,11 +48,11 @@ async def upload_document(
         )
 
     doc_id = uuid4()
-    storage_path = settings.upload_dir / f"{doc_id}{ext}"
-    with storage_path.open("wb") as f:
-        shutil.copyfileobj(file.file, f)
-    size = storage_path.stat().st_size
+    data = await file.read()
+    size = len(data)
     mime = file.content_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    key = storage.object_key(user.id, doc_id, ext)
+    await storage.put_object(key, data, mime)
 
     doc = Document(
         id=doc_id,
@@ -61,7 +60,7 @@ async def upload_document(
         filename=filename,
         mime_type=mime,
         size_bytes=size,
-        storage_path=str(storage_path),
+        storage_path=key,
         status="uploading",
     )
     session.add(doc)
@@ -84,13 +83,6 @@ async def delete_document(
     doc = await session.get(Document, document_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="document not found")
-    try:
-        from pathlib import Path
-
-        p = Path(doc.storage_path)
-        if p.exists():
-            p.unlink()
-    except OSError:
-        pass
+    await storage.delete_object(doc.storage_path)
     await session.delete(doc)
     # get_user_session commits at teardown.

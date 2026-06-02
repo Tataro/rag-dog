@@ -1,8 +1,19 @@
 import io
 
+import boto3
 import pytest
+from moto import mock_aws
 
+from app import storage
 from app.api import auth as auth_api
+from app.config import settings
+
+
+@pytest.fixture
+def s3():
+    with mock_aws():
+        boto3.client("s3", region_name=settings.s3_region).create_bucket(Bucket=settings.s3_bucket)
+        yield
 
 
 @pytest.fixture
@@ -21,7 +32,7 @@ async def _token(client, email):
 
 
 @pytest.mark.asyncio
-async def test_upload_then_list_is_user_scoped(client, fake_google, monkeypatch):
+async def test_upload_then_list_is_user_scoped(client, fake_google, monkeypatch, s3):
     # Avoid running the real ingestion background task in this test.
     from app.api import documents as docs_api
     monkeypatch.setattr(docs_api.BackgroundTasks, "add_task", lambda *a, **k: None)
@@ -33,6 +44,13 @@ async def test_upload_then_list_is_user_scoped(client, fake_google, monkeypatch)
         headers={"Authorization": f"Bearer {t1}"},
     )
     assert up.status_code == 201
+
+    listed = boto3.client("s3", region_name=settings.s3_region).list_objects_v2(
+        Bucket=settings.s3_bucket
+    ).get("Contents", [])
+    assert len(listed) == 1
+    assert listed[0]["Key"].endswith(".md")
+    assert await storage.get_bytes(listed[0]["Key"]) == b"# hello"
 
     # Allowlist + log in a second user; they must see no documents.
     from sqlalchemy import text
