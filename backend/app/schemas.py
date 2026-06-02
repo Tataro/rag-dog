@@ -56,3 +56,14 @@ class GoogleLoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     session_token: str
     user: UserOut
+
+
+class AddAllowedEmailRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+
+class AllowedEmailOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    email: str
+    created_at: datetime

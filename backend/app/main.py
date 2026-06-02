@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import auth, documents, query
+from .api import admin, auth, documents, query
 from .channels import line as line_channel
 from .channels import telegram as telegram_channel
 from .config import settings
@@ -34,6 +34,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(query.router, prefix="/api/query", tags=["query"])
 app.include_router(telegram_channel.router, prefix="/webhook/telegram", tags=["webhook"])
