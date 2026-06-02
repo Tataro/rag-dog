@@ -24,7 +24,7 @@
 - Modify: `backend/tests/conftest.py` (set S3 test env)
 - Test: `backend/tests/test_config.py` (extend)
 
-- [ ] **Step 1: Add dependencies**
+- [x] **Step 1: Add dependencies**
 
 In `backend/pyproject.toml` add to `dependencies`:
 ```toml
@@ -36,7 +36,7 @@ Add to `[dependency-groups].dev`:
 ```
 Run: `cd backend && uv sync`
 
-- [ ] **Step 2: Add the MinIO service to `docker-compose.yml`**
+- [x] **Step 2: Add the MinIO service to `docker-compose.yml`**
 
 Add under `services:` (alongside `postgres`):
 ```yaml
@@ -61,7 +61,7 @@ Add under `services:` (alongside `postgres`):
 ```
 And add `miniodata:` under the top-level `volumes:` block (next to `pgdata:`/`ollama:`).
 
-- [ ] **Step 3: Write the failing config test**
+- [x] **Step 3: Write the failing config test**
 
 Append to `backend/tests/test_config.py`:
 ```python
@@ -77,12 +77,12 @@ def test_s3_settings_have_expected_fields():
     assert s.s3_region == "us-east-1"  # default
 ```
 
-- [ ] **Step 4: Run it to verify it fails**
+- [x] **Step 4: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_config.py::test_s3_settings_have_expected_fields -v`
 Expected: FAIL (`Settings` has no `s3_endpoint_url`).
 
-- [ ] **Step 5: Add S3 settings**
+- [x] **Step 5: Add S3 settings**
 
 In `backend/app/config.py`, add fields near the database settings:
 ```python
@@ -94,7 +94,7 @@ In `backend/app/config.py`, add fields near the database settings:
     s3_bucket: str = "ragdog-documents"
 ```
 
-- [ ] **Step 6: Set S3 env for tests**
+- [x] **Step 6: Set S3 env for tests**
 
 In `backend/tests/conftest.py`, add to the `os.environ.setdefault(...)` block (with the other test env, before app imports):
 ```python
@@ -106,7 +106,7 @@ os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 ```
 (`moto` reads standard AWS env; setting dummy creds avoids accidental real-AWS calls.)
 
-- [ ] **Step 7: Document the vars in `.env.example`**
+- [x] **Step 7: Document the vars in `.env.example`**
 
 Add a section to `.env.example`:
 ```bash
@@ -121,12 +121,12 @@ S3_PORT=9000
 S3_CONSOLE_PORT=9001
 ```
 
-- [ ] **Step 8: Run it to verify pass + start MinIO**
+- [x] **Step 8: Run it to verify pass + start MinIO**
 
 Run: `cd backend && uv run pytest tests/test_config.py -v` → PASS.
 Run: `docker compose up -d minio` and confirm `docker ps` shows `ragdog-minio` healthy. (Dev only; tests use moto, not this container.)
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/pyproject.toml backend/uv.lock backend/app/config.py backend/tests/conftest.py backend/tests/test_config.py docker-compose.yml .env.example
@@ -141,7 +141,7 @@ git commit -m "feat(storage): add boto3/moto deps, S3 config, and MinIO service"
 - Create: `backend/app/storage.py`
 - Test: `backend/tests/test_storage.py`
 
-- [ ] **Step 1: Write the failing test (moto-mocked S3)**
+- [x] **Step 1: Write the failing test (moto-mocked S3)**
 
 Create `backend/tests/test_storage.py`:
 ```python
@@ -183,12 +183,12 @@ async def test_ensure_bucket_is_idempotent():
         assert await storage.get_bytes  # attribute exists (smoke)
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_storage.py -v`
 Expected: FAIL (`app.storage` does not exist).
 
-- [ ] **Step 3: Implement the storage module**
+- [x] **Step 3: Implement the storage module**
 
 Create `backend/app/storage.py`:
 ```python
@@ -255,12 +255,12 @@ async def delete_object(key: str) -> None:
     await run_in_threadpool(_del)
 ```
 
-- [ ] **Step 4: Run it to verify pass**
+- [x] **Step 4: Run it to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_storage.py -v`
 Expected: PASS (2 passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/storage.py backend/tests/test_storage.py
@@ -275,7 +275,7 @@ git commit -m "feat(storage): S3 object storage module (put/get/delete/ensure_bu
 - Modify: `backend/app/api/documents.py` (upload → put_object; delete → delete_object; key scheme)
 - Test: `backend/tests/test_documents_api.py` (extend with S3 mock)
 
-- [ ] **Step 1: Add an S3 fixture and extend the documents test**
+- [x] **Step 1: Add an S3 fixture and extend the documents test**
 
 In `backend/tests/test_documents_api.py`, add the moto fixture and assert the object lands in storage. Add at the top (after imports):
 ```python
@@ -335,12 +335,12 @@ Use the listing approach (do not expose `storage_path`):
     assert body == b"# hello"
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py -v`
 Expected: FAIL (upload still writes to disk; no object in S3).
 
-- [ ] **Step 3: Rewrite the upload + delete handlers to use storage**
+- [x] **Step 3: Rewrite the upload + delete handlers to use storage**
 
 In `backend/app/api/documents.py`:
 - Remove the `shutil` import and the `from ..config import settings` usage for `upload_dir`; add `from .. import storage` and keep `from ..config import settings` only if still used (it is not after this change — remove it if unused; ruff will tell you).
@@ -373,11 +373,11 @@ In `backend/app/api/documents.py`:
 ```
 Remove the now-unused `from pathlib import Path` local import and the `OSError` try/except.
 
-- [ ] **Step 4: Run it to verify pass**
+- [x] **Step 4: Run it to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py -v` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/api/documents.py backend/tests/test_documents_api.py
@@ -392,7 +392,7 @@ git commit -m "feat(storage): upload and delete Documents via MinIO, keyed by us
 - Modify: `backend/app/ingestion/pipeline.py` (download object to a temp file before parsing)
 - Test: `backend/tests/test_ingestion_storage.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/tests/test_ingestion_storage.py`:
 ```python
@@ -450,12 +450,12 @@ async def test_ingestion_pulls_file_from_storage(s3, monkeypatch):
     assert nchunks >= 1
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_ingestion_storage.py -v`
 Expected: FAIL (ingestion still reads `doc.storage_path` as a filesystem path; the key `u/a.txt` is not a real file).
 
-- [ ] **Step 3: Update ingestion to download from storage**
+- [x] **Step 3: Update ingestion to download from storage**
 
 In `backend/app/ingestion/pipeline.py`, change Phase 1 to also capture the key, and download to a temp file before parsing. Replace the parse section:
 ```python
@@ -478,11 +478,11 @@ In `run`, after Phase 1 captures `storage_path, mime_type, filename`, replace `b
 ```
 (Keep the rest of Phase 1/2 unchanged. `Path` is already imported.)
 
-- [ ] **Step 4: Run it to verify pass**
+- [x] **Step 4: Run it to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_ingestion_storage.py -v` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/ingestion/pipeline.py backend/tests/test_ingestion_storage.py
@@ -497,7 +497,7 @@ git commit -m "feat(storage): ingestion downloads source file from MinIO to pars
 - Modify: `backend/app/api/documents.py` (add `GET /{document_id}/file`)
 - Test: `backend/tests/test_documents_api.py` (download is user-scoped)
 
-- [ ] **Step 1: Add the failing test**
+- [x] **Step 1: Add the failing test**
 
 Append to `backend/tests/test_documents_api.py`:
 ```python
@@ -531,12 +531,12 @@ async def test_download_is_owner_only(client, fake_google, monkeypatch, s3):
     assert theirs.status_code == 404
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py::test_download_is_owner_only -v`
 Expected: FAIL (no `/file` route → 404 for owner too, or 405).
 
-- [ ] **Step 3: Add the download endpoint**
+- [x] **Step 3: Add the download endpoint**
 
 In `backend/app/api/documents.py`, add imports `import io` and `from fastapi.responses import StreamingResponse`, then add:
 ```python
@@ -556,11 +556,11 @@ async def download_document(
 ```
 The file is streamed through the authenticated, RLS-scoped endpoint, so MinIO stays private (no public presigned URLs) and a non-owner gets a 404 because RLS makes the row invisible.
 
-- [ ] **Step 4: Run it to verify pass**
+- [x] **Step 4: Run it to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py -v` → PASS (all).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/api/documents.py backend/tests/test_documents_api.py
@@ -576,7 +576,7 @@ git commit -m "feat(storage): ownership-checked Document download endpoint"
 - Modify: `README.md` (storage note) and remove the now-dead `upload_dir` config if unused
 - Test: full suite + ruff
 
-- [ ] **Step 1: Ensure the bucket exists at startup**
+- [x] **Step 1: Ensure the bucket exists at startup**
 
 In `backend/app/main.py`'s `lifespan`, before `yield`, add:
 ```python
@@ -587,7 +587,7 @@ In `backend/app/main.py`'s `lifespan`, before `yield`, add:
 ```
 (`settings` is already imported in main.py.)
 
-- [ ] **Step 2: Remove the dead local-upload config**
+- [x] **Step 2: Remove the dead local-upload config**
 
 `app/config.py` still has `upload_dir: Path = Path("./uploads")` and a `settings.upload_dir.mkdir(...)` at import. Grep for remaining uses:
 ```bash
@@ -595,11 +595,11 @@ cd backend && grep -rn "upload_dir" app/
 ```
 If the only references are the field + the `mkdir` line, remove BOTH (documents.py no longer uses local disk). If anything else uses it, leave it and note why. Remove `UPLOAD_DIR` from `.env.example`.
 
-- [ ] **Step 3: Update the README storage line**
+- [x] **Step 3: Update the README storage line**
 
 In `README.md`, change the layout note `uploads/        Original document files (gitignored)` to note files now live in MinIO, and update the "Stack" list to mention MinIO for document storage. Keep it to one or two lines.
 
-- [ ] **Step 4: Full suite + lint**
+- [x] **Step 4: Full suite + lint**
 
 Run:
 ```bash
@@ -608,7 +608,7 @@ uv run ruff check .
 ```
 Expected: all pass; ruff clean. Fix any unused-import (F401) fallout from removing `shutil`/`upload_dir`/`Path` usages.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/main.py backend/app/config.py .env.example README.md
