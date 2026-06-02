@@ -36,7 +36,7 @@ The test harness applies migrations to this DB automatically; it never touches t
 - Modify: `docker-compose.yml:3` (pin pgvector ≥ 0.8)
 - Test: `backend/tests/test_config.py`
 
-- [ ] **Step 1: Add runtime + dev dependencies**
+- [x] **Step 1: Add runtime + dev dependencies**
 
 In `backend/pyproject.toml`, add to `dependencies`:
 
@@ -58,7 +58,7 @@ Add to `[dependency-groups].dev`:
 cd backend && uv sync
 ```
 
-- [ ] **Step 2: Pin the pgvector image to a version that has iterative scans**
+- [x] **Step 2: Pin the pgvector image to a version that has iterative scans**
 
 In `docker-compose.yml`, change line 3 from:
 
@@ -74,7 +74,7 @@ to:
 
 (ADR 0002 amendment: iterative index scans require pgvector ≥ 0.8; the floating `:pg16` tag does not guarantee the version.)
 
-- [ ] **Step 3: Write the failing config test**
+- [x] **Step 3: Write the failing config test**
 
 Create `backend/tests/test_config.py`:
 
@@ -95,12 +95,12 @@ def test_bootstrap_admins_lowercased_set():
     assert s.bootstrap_admin_set == {"boss@example.com"}
 ```
 
-- [ ] **Step 4: Run it to verify it fails**
+- [x] **Step 4: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_config.py -v`
 Expected: FAIL with `AttributeError` (no `google_client_id_list` / `bootstrap_admin_set`).
 
-- [ ] **Step 5: Add the settings + helpers**
+- [x] **Step 5: Add the settings + helpers**
 
 In `backend/app/config.py`, add fields after line 37 (`cors_origins`):
 
@@ -123,12 +123,12 @@ Add properties alongside the existing ones (after line 49):
         return {x.strip().lower() for x in self.bootstrap_admin_emails.split(",") if x.strip()}
 ```
 
-- [ ] **Step 6: Run it to verify it passes**
+- [x] **Step 6: Run it to verify it passes**
 
 Run: `cd backend && uv run pytest tests/test_config.py -v`
 Expected: PASS (2 passed).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/pyproject.toml backend/uv.lock backend/app/config.py backend/tests/test_config.py docker-compose.yml
@@ -143,7 +143,7 @@ git commit -m "feat(backend): add auth deps and config, pin pgvector 0.8"
 - Create: `backend/tests/conftest.py`
 - Test: `backend/tests/test_harness.py`
 
-- [ ] **Step 1: Write the conftest**
+- [x] **Step 1: Write the conftest**
 
 Create `backend/tests/conftest.py`. It points the app at the test DB **before** importing app modules, applies migrations once per session, and truncates between tests.
 
@@ -196,7 +196,7 @@ async def session():
         yield s
 ```
 
-- [ ] **Step 2: Write a harness smoke test**
+- [x] **Step 2: Write a harness smoke test**
 
 Create `backend/tests/test_harness.py`:
 
@@ -211,12 +211,12 @@ async def test_health_ok(client):
     assert resp.json() == {"status": "ok"}
 ```
 
-- [ ] **Step 3: Run it to verify it fails or errors meaningfully**
+- [x] **Step 3: Run it to verify it fails or errors meaningfully**
 
 Run: `cd backend && uv run pytest tests/test_harness.py -v`
 Expected at this point: PASS (health route already exists and migrations only create the 0001 schema). If it errors with a connection failure, the `ragdog_test` DB was not created — see Prerequisites.
 
-- [ ] **Step 4: Confirm the truncate fixture tolerates the not-yet-existing tables**
+- [x] **Step 4: Confirm the truncate fixture tolerates the not-yet-existing tables**
 
 `users`/`allowed_emails` don't exist until Task 4. Until then, adjust `_USER_TABLES` to only the existing four for this commit:
 
@@ -226,12 +226,12 @@ _USER_TABLES = ["messages", "conversations", "chunks", "documents"]
 
 (We restore `users`/`allowed_emails` in Task 4, Step 6.)
 
-- [ ] **Step 5: Run again to verify pass**
+- [x] **Step 5: Run again to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_harness.py -v`
 Expected: PASS (1 passed).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/tests/conftest.py backend/tests/test_harness.py
@@ -246,7 +246,7 @@ git commit -m "test(backend): add Postgres-backed async test harness"
 - Modify: `backend/app/models.py` (add `User`, `AllowedEmail`; add `user_id` to `Document`, `Chunk`, `Conversation`, `Message`; relax Conversation constraint)
 - Test: `backend/tests/test_models.py`
 
-- [ ] **Step 1: Write the failing model test**
+- [x] **Step 1: Write the failing model test**
 
 Create `backend/tests/test_models.py`:
 
@@ -268,12 +268,12 @@ def test_allowed_email_pk_is_email():
     assert AllowedEmail.__table__.primary_key.columns.keys() == ["email"]
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_models.py -v`
 Expected: FAIL with `ImportError` (no `User`/`AllowedEmail`).
 
-- [ ] **Step 3: Add the models and ownership columns**
+- [x] **Step 3: Add the models and ownership columns**
 
 In `backend/app/models.py`, add these classes (after the imports, before `Document`):
 
@@ -349,12 +349,12 @@ In `Message` (after its `id`):
     )
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 Run: `cd backend && uv run pytest tests/test_models.py -v`
 Expected: PASS (3 passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/models.py backend/tests/test_models.py
@@ -375,7 +375,7 @@ git commit -m "feat(backend): add User/AllowedEmail models and user_id ownership
 - Modify: `backend/tests/conftest.py:` (restore full `_USER_TABLES`)
 - Test: `backend/tests/test_migration_rls.py`
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 Create `backend/alembic/versions/0002_multi_user_rls.py`:
 
@@ -466,7 +466,7 @@ def downgrade() -> None:
     op.drop_table("users")
 ```
 
-- [ ] **Step 2: Restore the full truncate list in conftest**
+- [x] **Step 2: Restore the full truncate list in conftest**
 
 In `backend/tests/conftest.py`, change `_USER_TABLES` back to:
 
@@ -474,7 +474,7 @@ In `backend/tests/conftest.py`, change `_USER_TABLES` back to:
 _USER_TABLES = ["messages", "conversations", "chunks", "documents", "allowed_emails", "users"]
 ```
 
-- [ ] **Step 3: Write the RLS isolation test (raw SQL, no app layer yet)**
+- [x] **Step 3: Write the RLS isolation test (raw SQL, no app layer yet)**
 
 Create `backend/tests/test_migration_rls.py`:
 
@@ -527,17 +527,17 @@ async def test_rls_default_denies_without_guc():
         assert (await s.execute(text("SELECT count(*) FROM documents"))).scalar_one() == 0
 ```
 
-- [ ] **Step 4: Run to verify the migration applies and isolation holds**
+- [x] **Step 4: Run to verify the migration applies and isolation holds**
 
 Run: `cd backend && uv run pytest tests/test_migration_rls.py -v`
 Expected: PASS (2 passed). The session-scoped `_migrate` fixture applies `0002` to the test DB. If migration errors, read the Alembic traceback before proceeding.
 
-- [ ] **Step 5: Apply the migration to the dev DB**
+- [x] **Step 5: Apply the migration to the dev DB**
 
 Run: `cd backend && uv run alembic upgrade head`
 Expected: `Running upgrade 0001_init -> 0002_multi_user_rls`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/alembic/versions/0002_multi_user_rls.py backend/tests/conftest.py backend/tests/test_migration_rls.py
@@ -553,7 +553,7 @@ git commit -m "feat(backend): migration for users, ownership, and FORCE RLS poli
 - Create: `backend/app/security/session.py`
 - Test: `backend/tests/test_session_token.py`
 
-- [ ] **Step 1: Write the session-token test**
+- [x] **Step 1: Write the session-token test**
 
 Create `backend/tests/test_session_token.py`:
 
@@ -579,12 +579,12 @@ def test_tampered_token_rejected():
         decode_session_token(token + "x")
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_session_token.py -v`
 Expected: FAIL with `ModuleNotFoundError: app.security.session`.
 
-- [ ] **Step 3: Implement the session-token module**
+- [x] **Step 3: Implement the session-token module**
 
 Create `backend/app/security/session.py`:
 
@@ -613,7 +613,7 @@ def decode_session_token(token: str) -> dict:
     return jwt.decode(token, settings.session_jwt_secret, algorithms=["HS256"])
 ```
 
-- [ ] **Step 4: Implement the Google verification module**
+- [x] **Step 4: Implement the Google verification module**
 
 Create `backend/app/security/google.py`:
 
@@ -656,12 +656,12 @@ async def verify_google_id_token(token: str) -> dict:
     return info
 ```
 
-- [ ] **Step 5: Run the session-token test to verify pass**
+- [x] **Step 5: Run the session-token test to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_session_token.py -v`
 Expected: PASS (2 passed). (`google.py` is exercised in Task 7 via a mocked verifier; it does network I/O so it isn't unit-tested directly here.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/security/google.py backend/app/security/session.py backend/tests/test_session_token.py
@@ -677,7 +677,7 @@ git commit -m "feat(backend): Google ID-token verification and session JWT"
 - Create: `backend/app/deps.py` (`get_current_user`, `get_current_admin`, `get_user_session`)
 - Test: `backend/tests/test_deps.py`
 
-- [ ] **Step 1: Add the `user_session` context manager**
+- [x] **Step 1: Add the `user_session` context manager**
 
 In `backend/app/db.py`, append:
 
@@ -708,7 +708,7 @@ async def user_session(user_id: UUID):
             raise
 ```
 
-- [ ] **Step 2: Write the deps test**
+- [x] **Step 2: Write the deps test**
 
 Create `backend/tests/test_deps.py`:
 
@@ -751,12 +751,12 @@ async def test_me_returns_current_user(client):
 
 (This test depends on the `/api/auth/me` route added in Task 7; it will fail until then. That's intentional TDD ordering — run it red now, green after Task 7.)
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_deps.py -v`
 Expected: FAIL — `get_current_user` import error (and route 404 once import is fixed).
 
-- [ ] **Step 4: Implement the dependencies**
+- [x] **Step 4: Implement the dependencies**
 
 Create `backend/app/deps.py`:
 
@@ -809,12 +809,12 @@ async def get_user_session(
         yield session
 ```
 
-- [ ] **Step 5: Leave the test red for now**
+- [x] **Step 5: Leave the test red for now**
 
 Run: `cd backend && uv run pytest tests/test_deps.py::test_protected_route_requires_token -v`
 Expected: still FAIL (route 404) — `/api/auth/me` arrives in Task 7. The import error is gone, which is the win for this task.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/db.py backend/app/deps.py backend/tests/test_deps.py
@@ -831,7 +831,7 @@ git commit -m "feat(backend): auth dependencies and RLS-bound session"
 - Modify: `backend/app/main.py` (register router)
 - Test: `backend/tests/test_auth_api.py`
 
-- [ ] **Step 1: Add schemas**
+- [x] **Step 1: Add schemas**
 
 In `backend/app/schemas.py`, append:
 
@@ -855,7 +855,7 @@ class LoginResponse(BaseModel):
     user: UserOut
 ```
 
-- [ ] **Step 2: Write the auth API test (with the Google verifier mocked)**
+- [x] **Step 2: Write the auth API test (with the Google verifier mocked)**
 
 Create `backend/tests/test_auth_api.py`:
 
@@ -910,12 +910,12 @@ async def test_me_after_login(client, fake_google):
     assert me.json()["email"] == "boss@example.com"
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_auth_api.py -v`
 Expected: FAIL — `app.api.auth` does not exist.
 
-- [ ] **Step 4: Implement the auth router + provisioning**
+- [x] **Step 4: Implement the auth router + provisioning**
 
 Create `backend/app/api/auth.py`:
 
@@ -986,7 +986,7 @@ async def me(user: User = Depends(get_current_user)) -> User:
     return user
 ```
 
-- [ ] **Step 5: Register the router**
+- [x] **Step 5: Register the router**
 
 In `backend/app/main.py`, add the import near the other api imports (line 7):
 
@@ -1000,12 +1000,12 @@ And register it (after line 35, before the documents router):
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 ```
 
-- [ ] **Step 6: Run the auth + deps tests to verify pass**
+- [x] **Step 6: Run the auth + deps tests to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_auth_api.py tests/test_deps.py -v`
 Expected: PASS (all). The previously-red `test_deps.py` tests go green now.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/app/api/auth.py backend/app/schemas.py backend/app/main.py backend/tests/test_auth_api.py
@@ -1021,7 +1021,7 @@ git commit -m "feat(backend): Google login, user provisioning, /api/auth/me"
 - Modify: `backend/app/ingestion/pipeline.py` (accept `owner_id`, split transactions, set chunk `user_id`)
 - Test: `backend/tests/test_documents_api.py`
 
-- [ ] **Step 1: Write the documents isolation test**
+- [x] **Step 1: Write the documents isolation test**
 
 Create `backend/tests/test_documents_api.py`:
 
@@ -1077,12 +1077,12 @@ async def test_upload_then_list_is_user_scoped(client, fake_google, monkeypatch)
     assert len(owner.json()) == 1
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py -v`
 Expected: FAIL — endpoints don't set `user_id` (insert violates NOT NULL) and/or aren't scoped.
 
-- [ ] **Step 3: Rewrite the documents router**
+- [x] **Step 3: Rewrite the documents router**
 
 Replace the body of `backend/app/api/documents.py` with:
 
@@ -1183,7 +1183,7 @@ async def delete_document(
 
 Note: the endpoints no longer call `session.commit()` — the `user_session` context manager (via `get_user_session`) commits on success and rolls back on error.
 
-- [ ] **Step 4: Rewrite ingestion to be owner-scoped and split-transaction**
+- [x] **Step 4: Rewrite ingestion to be owner-scoped and split-transaction**
 
 Replace `backend/app/ingestion/pipeline.py` with:
 
@@ -1263,12 +1263,12 @@ async def run(document_id: UUID, owner_id: UUID) -> None:
         log.exception("ingest: failed for %s", document_id)
 ```
 
-- [ ] **Step 5: Run the documents test to verify pass**
+- [x] **Step 5: Run the documents test to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_documents_api.py -v`
 Expected: PASS (1 passed).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/api/documents.py backend/app/ingestion/pipeline.py backend/tests/test_documents_api.py
@@ -1285,7 +1285,7 @@ git commit -m "feat(backend): scope documents API and ingestion to owning user"
 - Modify: `backend/app/generation/pipeline.py` (`answer_query` takes `user_id`/`conversation_id`, split transactions, owns conversations)
 - Test: `backend/tests/test_query_api.py`
 
-- [ ] **Step 1: Update the request schema**
+- [x] **Step 1: Update the request schema**
 
 In `backend/app/schemas.py`, replace `QueryRequest` with:
 
@@ -1295,7 +1295,7 @@ class QueryRequest(BaseModel):
     conversation_id: UUID | None = None  # None starts a new conversation
 ```
 
-- [ ] **Step 2: Write the query isolation test (LLM + embed mocked)**
+- [x] **Step 2: Write the query isolation test (LLM + embed mocked)**
 
 Create `backend/tests/test_query_api.py`:
 
@@ -1357,12 +1357,12 @@ async def test_cannot_query_into_another_users_conversation(client, fake_google,
     assert resp.status_code == 404
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_query_api.py -v`
 Expected: FAIL — `answer_query` signature and the route still use `channel`/`session_id`.
 
-- [ ] **Step 4: Rewrite `answer_query`**
+- [x] **Step 4: Rewrite `answer_query`**
 
 Replace `backend/app/generation/pipeline.py`'s `answer_query` and `_resolve_conversation` (lines 31–81) with:
 
@@ -1430,7 +1430,7 @@ from ..db import user_session
 
 (`embed_text` and `search` are still imported as before; `session` arg removed from `answer_query`.)
 
-- [ ] **Step 5: Rewrite the query route**
+- [x] **Step 5: Rewrite the query route**
 
 Replace `backend/app/api/query.py` with:
 
@@ -1461,12 +1461,12 @@ async def post_query(
 
 Note: the query route depends only on `get_current_user`, not `get_user_session`, because `answer_query` manages its own RLS-scoped transactions (so the LLM call isn't wrapped in a DB transaction).
 
-- [ ] **Step 6: Run to verify pass**
+- [x] **Step 6: Run to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_query_api.py -v`
 Expected: PASS (2 passed).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/app/schemas.py backend/app/api/query.py backend/app/generation/pipeline.py backend/tests/test_query_api.py
@@ -1483,7 +1483,7 @@ git commit -m "feat(backend): scope chat pipeline to user, explicit conversation
 - Modify: `backend/app/main.py` (register router)
 - Test: `backend/tests/test_admin_api.py`
 
-- [ ] **Step 1: Add schemas**
+- [x] **Step 1: Add schemas**
 
 In `backend/app/schemas.py`, append:
 
@@ -1499,7 +1499,7 @@ class AllowedEmailOut(BaseModel):
     created_at: datetime
 ```
 
-- [ ] **Step 2: Write the admin API test**
+- [x] **Step 2: Write the admin API test**
 
 Create `backend/tests/test_admin_api.py`:
 
@@ -1541,12 +1541,12 @@ async def test_non_admin_forbidden(client, fake_google):
     assert resp.status_code == 403
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_admin_api.py -v`
 Expected: FAIL — `app.api.admin` does not exist.
 
-- [ ] **Step 4: Implement the admin router**
+- [x] **Step 4: Implement the admin router**
 
 Create `backend/app/api/admin.py`:
 
@@ -1604,7 +1604,7 @@ async def remove_allowlist(
 
 (`allowed_emails`/`users` have no RLS, so admin routes use the plain `get_session`.)
 
-- [ ] **Step 5: Register the router**
+- [x] **Step 5: Register the router**
 
 In `backend/app/main.py`, update the import line to:
 
@@ -1618,12 +1618,12 @@ And register (after the auth router):
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 ```
 
-- [ ] **Step 6: Run to verify pass**
+- [x] **Step 6: Run to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_admin_api.py -v`
 Expected: PASS (2 passed).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/app/api/admin.py backend/app/schemas.py backend/app/main.py backend/tests/test_admin_api.py
@@ -1638,7 +1638,7 @@ git commit -m "feat(backend): admin allowlist endpoints"
 - Modify: `backend/app/main.py` (remove telegram/line routers; enable credentials in CORS)
 - Test: `backend/tests/test_routes.py`
 
-- [ ] **Step 1: Write a route-surface test**
+- [x] **Step 1: Write a route-surface test**
 
 Create `backend/tests/test_routes.py`:
 
@@ -1659,12 +1659,12 @@ def test_core_api_present():
     assert "/api/admin/allowlist" in paths
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `cd backend && uv run pytest tests/test_routes.py -v`
 Expected: FAIL on `test_bot_webhooks_are_gone` (webhook routers still registered).
 
-- [ ] **Step 3: Remove bot routers and fix CORS**
+- [x] **Step 3: Remove bot routers and fix CORS**
 
 In `backend/app/main.py`:
 - Delete the two channel imports (lines 8–9: `from .channels import line ...` and `... telegram ...`).
@@ -1682,17 +1682,17 @@ app.include_router(query.router, prefix="/api/query", tags=["query"])
 
 > The bot code (`app/channels/`, `app/security/verify.py`) stays on disk but unwired — it returns when account-linking is designed (ADR 0004). Do not delete it.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `cd backend && uv run pytest tests/test_routes.py -v`
 Expected: PASS (2 passed).
 
-- [ ] **Step 5: Run the whole suite + lint**
+- [x] **Step 5: Run the whole suite + lint**
 
 Run: `cd backend && uv run pytest -v && uv run ruff check .`
 Expected: all tests PASS; ruff clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/main.py backend/tests/test_routes.py
