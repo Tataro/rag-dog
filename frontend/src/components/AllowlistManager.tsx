@@ -11,7 +11,7 @@ export function AllowlistManager() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
@@ -29,11 +29,14 @@ export function AllowlistManager() {
   }, [logout]);
 
   useEffect(() => {
-    // Load allowlist on mount. setState happens after the awaited fetch resolves.
+    // Only the admin path hits the admin API; a non-admin would just get a 403.
+    // setState happens after the awaited fetch resolves.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-  }, [load]);
+    if (user?.is_admin) void load();
+  }, [load, user?.is_admin]);
 
+  // UX-only guard. Real authorization is enforced by the backend (403 on every
+  // /api/admin/* call); hiding this screen is not a security boundary.
   if (!user?.is_admin) {
     return (
       <p className="text-sm text-zinc-500 italic text-center py-8">
@@ -43,7 +46,7 @@ export function AllowlistManager() {
   }
 
   async function handleRemove(email: string) {
-    setRemoving(email);
+    setRemoving((prev) => new Set(prev).add(email));
     try {
       await api.removeAllowedEmail(email);
       await load();
@@ -54,7 +57,11 @@ export function AllowlistManager() {
       }
       setLoadError(e instanceof Error ? e.message : "could not remove email");
     } finally {
-      setRemoving(null);
+      setRemoving((prev) => {
+        const next = new Set(prev);
+        next.delete(email);
+        return next;
+      });
     }
   }
 
@@ -64,7 +71,7 @@ export function AllowlistManager() {
     setAdding(true);
     setAddError(null);
     try {
-      await api.addAllowedEmail(newEmail);
+      await api.addAllowedEmail(newEmail.trim());
       setNewEmail("");
       await load();
     } catch (err) {
@@ -106,7 +113,7 @@ export function AllowlistManager() {
         <p className="text-sm text-rose-600 dark:text-rose-400">{loadError}</p>
       )}
 
-      {emails.length === 0 && !loadError ? (
+      {emails.length === 0 ? (
         <p className="text-sm text-zinc-500 italic text-center py-8">
           Allowlist is empty. Add an email above.
         </p>
@@ -124,10 +131,10 @@ export function AllowlistManager() {
               <button
                 type="button"
                 onClick={() => handleRemove(entry.email)}
-                disabled={removing === entry.email}
+                disabled={removing.has(entry.email)}
                 className="px-2.5 py-1 rounded-md text-sm text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 disabled:opacity-50 transition-colors"
               >
-                {removing === entry.email ? "…" : "Remove"}
+                {removing.has(entry.email) ? "…" : "Remove"}
               </button>
             </li>
           ))}

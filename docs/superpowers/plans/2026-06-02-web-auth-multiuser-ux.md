@@ -454,15 +454,15 @@ git commit -m "feat(web): chat uses server conversations; nav logout; 401 handli
 - Create: `frontend/src/components/AllowlistManager.tsx`
 - Modify: `frontend/src/components/Nav.tsx` (show an "Admin" link only when `user.is_admin`)
 
-- [ ] **Step 1: Allowlist manager component** — Create `AllowlistManager.tsx` (`"use client"`): on mount, `api.listAllowlist()`; render the list with a remove button (`api.removeAllowedEmail`); an input + add button (`api.addAllowedEmail`, then refresh). Guard the whole component: if `!useAuth().user?.is_admin`, render "Not authorized." Handle `UnauthorizedError` via `logout()`.
+- [x] **Step 1: Allowlist manager component** — Create `AllowlistManager.tsx` (`"use client"`): on mount, `api.listAllowlist()`; render the list with a remove button (`api.removeAllowedEmail`); an input + add button (`api.addAllowedEmail`, then refresh). Guard the whole component: if `!useAuth().user?.is_admin`, render "Not authorized." Handle `UnauthorizedError` via `logout()`.
 
-- [ ] **Step 2: Admin page** — Create `frontend/src/app/admin/page.tsx` mirroring `chat/page.tsx`'s structure, rendering `<AllowlistManager />`.
+- [x] **Step 2: Admin page** — Create `frontend/src/app/admin/page.tsx` mirroring `chat/page.tsx`'s structure, rendering `<AllowlistManager />`.
 
-- [ ] **Step 3: Conditional nav link** — In the client `<UserMenu />` (or `Nav`), show an "Admin" `Link` to `/admin` only when `user.is_admin`.
+- [x] **Step 3: Conditional nav link** — In the client `<UserMenu />` (or `Nav`), show an "Admin" `Link` to `/admin` only when `user.is_admin`.
 
-- [ ] **Step 4: Verify** — `tsc --noEmit`, `pnpm lint`, `pnpm test`. Manually: as the bootstrap admin, `/admin` lists/adds/removes emails; as a non-admin (or direct nav), it shows "Not authorized"; the backend also enforces 403 (defense in depth).
+- [x] **Step 4: Verify** — `tsc --noEmit`, `pnpm lint`, `pnpm test`. Manually: as the bootstrap admin, `/admin` lists/adds/removes emails; as a non-admin (or direct nav), it shows "Not authorized"; the backend also enforces 403 (defense in depth).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add frontend/src/app/admin frontend/src/components/AllowlistManager.tsx frontend/src/components/Nav.tsx
 git commit -m "feat(web): admin allowlist management screen"
