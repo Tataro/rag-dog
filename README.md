@@ -12,6 +12,7 @@ Designed for a MacBook M4 (36 GB), portable to a bigger GPU box later.
 - **Embeddings**: `bge-m3` (multilingual, 1024-dim) via Ollama
 - **Generation**: `qwen2.5:14b-instruct` (Q4, ~9 GB) via Ollama
 - **Bots**: Telegram + Line, exposed via Cloudflare Tunnel (webhooks only)
+- **Object storage**: MinIO (S3-compatible) for uploaded document files
 
 See [`docs/adr/`](docs/adr) for the reasoning behind each choice.
 
@@ -55,7 +56,7 @@ backend/        FastAPI service (ingestion + retrieval + generation + channels)
 frontend/       Next.js web UI
 docs/adr/       Architecture Decision Records
 ops/            Cloudflare Tunnel config, Ollama pull script
-uploads/        Original document files (gitignored)
+uploads/        (removed) original document files now stored in MinIO object storage
 CONTEXT.md      Domain glossary
 ```
 

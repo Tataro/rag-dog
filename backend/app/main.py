@@ -17,6 +17,10 @@ log = logging.getLogger("ragdog")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log.info("starting rag-dog (embed=%s, gen=%s)", settings.embedding_model, settings.generation_model)
+    from . import storage
+
+    await storage.ensure_bucket()
+    log.info("object storage ready (bucket=%s)", settings.s3_bucket)
     yield
     log.info("shutting down")
 

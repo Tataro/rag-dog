@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,8 +24,6 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 8
     history_turns: int = 5
     citations_limit: int = 3
-
-    upload_dir: Path = Path("./uploads")
 
     # Object storage (MinIO / S3-compatible) for uploaded Document files.
     s3_endpoint_url: str = "http://localhost:9000"
@@ -73,4 +69,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-settings.upload_dir.mkdir(parents=True, exist_ok=True)

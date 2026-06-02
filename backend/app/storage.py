@@ -35,19 +35,18 @@ def object_key(user_id, document_id, ext: str) -> str:
 async def ensure_bucket() -> None:
     def _ensure():
         client = _client()
-        existing = {b["Name"] for b in client.list_buckets().get("Buckets", [])}
-        if settings.s3_bucket in existing:
-            return
+        # Create unconditionally and treat "already exists" as success. We avoid a
+        # list_buckets pre-check on purpose: it needs the broad s3:ListAllMyBuckets
+        # IAM action that a least-privilege cloud-S3 policy may not grant (ADR 0004
+        # portability goal). This also makes the call race-safe across instances.
         # AWS S3 (unlike MinIO) rejects create_bucket without a LocationConstraint
-        # for any region other than us-east-1 — needed for the "portable to cloud
-        # S3" goal (ADR 0004).
+        # for any region other than us-east-1.
         kwargs: dict = {"Bucket": settings.s3_bucket}
         if settings.s3_region != "us-east-1":
             kwargs["CreateBucketConfiguration"] = {"LocationConstraint": settings.s3_region}
         try:
             client.create_bucket(**kwargs)
         except ClientError as exc:
-            # Lost a startup race with another instance — that's fine.
             if exc.response.get("Error", {}).get("Code") not in _BUCKET_EXISTS_CODES:
                 raise
 
