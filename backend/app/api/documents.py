@@ -67,6 +67,10 @@ async def upload_document(
     session.add(doc)
     await session.flush()
     await session.refresh(doc)
+    # Commit BEFORE scheduling ingestion: background tasks run after the response is
+    # sent but before get_user_session's teardown commit, so the row must already be
+    # committed or run_ingestion's fresh session won't see it (doc stuck "uploading").
+    await session.commit()
 
     # Hand the owner id to the background task — it has no request/user context.
     background.add_task(run_ingestion, doc.id, user.id)

@@ -62,6 +62,9 @@ async def line_webhook(
 
 async def _handle_line_message(user_id: str, text: str, reply_token: str) -> None:
     try:
+        # FIXME(ADR 0004): this channel is descoped/unwired. The call below uses the
+        # pre-multi-user answer_query signature and will TypeError if re-wired — the
+        # bot first needs a Google<->LINE-user-id account-linking flow for a user_id.
         async with SessionLocal() as session:
             result = await answer_query(session, channel="line", external_id=user_id, text=text)
         reply = format_bot_reply(result)[:_LINE_MAX_TEXT]

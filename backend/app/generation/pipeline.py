@@ -33,14 +33,20 @@ class QueryResult:
 async def answer_query(
     *, user_id: UUID, conversation_id: UUID | None, text: str
 ) -> QueryResult:
-    # Phase 1 (read): resolve/own the conversation, load history, retrieve.
+    # Phase 1a (read): resolve/own the conversation and load history in a short tx.
     async with user_session(user_id) as session:
         convo = await _resolve_conversation(session, user_id, conversation_id)
         convo_id = convo.id
         history = await _load_history(session, convo_id)
-        rewritten = await rewrite(history, text) if history else text
-        log.info("query: user=%s rewrite=%r", user_id, rewritten)
-        embedding = await embed_text(rewritten)
+
+    # Slow Ollama calls (rewrite + embed) happen OUTSIDE any DB transaction so we
+    # don't hold a pooled connection idle across them (see user_session docstring).
+    rewritten = await rewrite(history, text) if history else text
+    log.info("query: user=%s rewrite=%r", user_id, rewritten)
+    embedding = await embed_text(rewritten)
+
+    # Phase 1b (read): vector search in its own short tx.
+    async with user_session(user_id) as session:
         hits = await search(session, embedding)
 
     # Strip citation markers from prior assistant turns — they're noise for

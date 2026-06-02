@@ -55,6 +55,9 @@ async def telegram_webhook(
 
 async def _handle_telegram_message(chat_id: str, text: str, reply_to: int | None) -> None:
     try:
+        # FIXME(ADR 0004): this channel is descoped/unwired. The call below uses the
+        # pre-multi-user answer_query signature and will TypeError if re-wired — the
+        # bot first needs a Google<->chat-id account-linking flow to obtain a user_id.
         async with SessionLocal() as session:
             result = await answer_query(session, channel="telegram", external_id=chat_id, text=text)
         reply = format_bot_reply(result)

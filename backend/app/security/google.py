@@ -21,6 +21,9 @@ async def verify_google_id_token(token: str) -> dict:
         # A fresh Request() per call: it wraps a requests.Session, which is not
         # thread-safe, and run_in_threadpool may run several of these concurrently.
         request = google_requests.Request()
+        # No audience= passed: verify_oauth2_token only accepts a SINGLE audience,
+        # but we accept several client IDs (web + mobile). We validate `aud` against
+        # the full allowed list ourselves below.
         return id_token.verify_oauth2_token(token, request)
 
     try:
