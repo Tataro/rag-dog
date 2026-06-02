@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, UnauthorizedError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { DocumentOut } from "@/lib/types";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function DocumentUploader({ onUploaded }: Props) {
+  const { logout } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,10 @@ export function DocumentUploader({ onUploaded }: Props) {
         onUploaded(doc);
       }
     } catch (e) {
+      if (e instanceof UnauthorizedError) {
+        logout();
+        return;
+      }
       setError(e instanceof Error ? e.message : "upload failed");
     } finally {
       setBusy(false);

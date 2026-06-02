@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, UnauthorizedError } from "@/lib/api";
 import { DocumentList } from "@/components/DocumentList";
 import { DocumentUploader } from "@/components/DocumentUploader";
+import { useAuth } from "@/lib/auth-context";
 import type { DocumentOut } from "@/lib/types";
 
 export default function DocumentsPage() {
+  const { logout } = useAuth();
   const [docs, setDocs] = useState<DocumentOut[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -16,9 +18,13 @@ export default function DocumentsPage() {
       setDocs(next);
       setLoadError(null);
     } catch (e) {
+      if (e instanceof UnauthorizedError) {
+        logout();
+        return;
+      }
       setLoadError(e instanceof Error ? e.message : "could not load documents");
     }
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     // Initial document load. setState happens after the awaited fetch resolves —

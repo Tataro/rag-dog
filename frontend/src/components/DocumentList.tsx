@@ -38,8 +38,16 @@ export function DocumentList({ docs, onChanged }: Props) {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this document and all its chunks?")) return;
-    await api.deleteDocument(id);
-    onChanged();
+    try {
+      await api.deleteDocument(id);
+      onChanged();
+    } catch (e) {
+      if (e instanceof UnauthorizedError) {
+        logout();
+        return;
+      }
+      setDownloadError("delete failed");
+    }
   }
 
   async function handleDownload(doc: DocumentOut) {

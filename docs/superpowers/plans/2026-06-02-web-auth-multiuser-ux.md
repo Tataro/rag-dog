@@ -476,11 +476,11 @@ git commit -m "feat(web): admin allowlist management screen"
 - Modify: `frontend/src/components/DocumentList.tsx` (download via authenticated blob; uses Plan 2's `/file` endpoint)
 - Modify: `README.md` (web env vars: `NEXT_PUBLIC_API_BASE`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`)
 
-- [ ] **Step 1: Download control** — In `DocumentList`, add a download action calling `api.downloadDocument(id)` → create an object URL from the Blob and trigger a save (`const url = URL.createObjectURL(blob); ...; URL.revokeObjectURL(url)`). If Plan 2 isn't merged yet, this endpoint 404s — guard with a try/catch and a "download unavailable" message so the screen still works.
+- [x] **Step 1: Download control** — In `DocumentList`, add a download action calling `api.downloadDocument(id)` → create an object URL from the Blob and trigger a save (`const url = URL.createObjectURL(blob); ...; URL.revokeObjectURL(url)`). If Plan 2 isn't merged yet, this endpoint 404s — guard with a try/catch and a "download unavailable" message so the screen still works.
 
-- [ ] **Step 2: README** — Document the two `NEXT_PUBLIC_*` vars and that the web OAuth client ID must also be in the backend `GOOGLE_CLIENT_IDS`.
+- [x] **Step 2: README** — Document the two `NEXT_PUBLIC_*` vars and that the web OAuth client ID must also be in the backend `GOOGLE_CLIENT_IDS`.
 
-- [ ] **Step 3: Full verification**
+- [x] **Step 3: Full verification**
 ```bash
 cd frontend
 pnpm test
@@ -490,7 +490,7 @@ pnpm build   # the real Next 16 production build — must succeed
 ```
 All must pass. Then `pnpm dev` and walk the full flow: sign in → upload a doc → see it ingest to `ready` → chat with a citation → download the doc → (as admin) manage the allowlist → sign out.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add frontend/src/components/DocumentList.tsx README.md
 git commit -m "feat(web): authenticated document download; docs"
