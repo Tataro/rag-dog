@@ -37,3 +37,22 @@ class QueryResponse(BaseModel):
     answer: str
     citations: list[Citation]
     conversation_id: UUID
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: str
+    name: str | None = None
+    picture: str | None = None
+    is_admin: bool
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str = Field(min_length=1)
+
+
+class LoginResponse(BaseModel):
+    session_token: str
+    user: UserOut
