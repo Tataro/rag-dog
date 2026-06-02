@@ -3,23 +3,27 @@ from pathlib import Path
 
 # Must run before any `app.*` import so pydantic-settings reads the test values.
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://ragdog:ragdog@localhost:5432/ragdog_test")
+os.environ.setdefault("APP_DATABASE_URL", "postgresql+asyncpg://ragdog_app:ragdog_app@localhost:5432/ragdog_test")
 os.environ.setdefault("SESSION_JWT_SECRET", "test-secret")
 os.environ.setdefault("GOOGLE_CLIENT_IDS", "test-client.apps.googleusercontent.com")
 os.environ.setdefault("BOOTSTRAP_ADMIN_EMAILS", "boss@example.com")
 
 import pytest
 import pytest_asyncio
-from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.db import SessionLocal, engine
+from alembic import command
+from app.db import SessionLocal
 from app.main import app
 
-# Temporary: only the four tables that exist in 0001_init.
-# Restore the full list (add "allowed_emails", "users") once Task 4 adds those migrations.
-_USER_TABLES = ["messages", "conversations", "chunks", "documents"]
+_USER_TABLES = ["messages", "conversations", "chunks", "documents", "allowed_emails", "users"]
+
+# Cleanup runs as the admin/owner role: the app role (ragdog_app) is subject to RLS
+# and cannot TRUNCATE, and a DELETE under default-deny RLS would remove nothing.
+_admin_engine = create_async_engine(os.environ["DATABASE_URL"])
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -35,7 +39,7 @@ def _migrate():
 
 @pytest_asyncio.fixture(autouse=True)
 async def _clean_tables():
-    async with engine.begin() as conn:
+    async with _admin_engine.begin() as conn:
         await conn.execute(text("TRUNCATE " + ", ".join(_USER_TABLES) + " RESTART IDENTITY CASCADE"))
     yield
 

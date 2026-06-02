@@ -20,3 +20,11 @@ Enforce isolation with **Postgres RLS** on `documents`, `chunks`, `conversations
 - The backend must reliably `SET LOCAL app.user_id` inside each request's transaction, and never reuse a pooled connection across Users mid-transaction. This is the one operational discipline RLS demands.
 - Admin/maintenance jobs that legitimately span Users run under a role with `BYPASSRLS`, explicitly and narrowly — never the request-path role.
 - Retrieval is now always a *filtered* vector query; the index implications are handled in the amendment to [0002](0002-dense-only-retrieval.md).
+
+## Implementation notes (learned while building 0002)
+
+Two non-obvious facts make RLS work or silently fail, both discovered by the isolation test:
+
+1. **The runtime connection must be a non-superuser, non-`BYPASSRLS` role.** `FORCE ROW LEVEL SECURITY` binds the table *owner* but never a superuser — and the default Docker `postgres` image makes `POSTGRES_USER` a superuser, which bypasses RLS entirely. So the app connects as a dedicated least-privilege role (`ragdog_app`, `NOSUPERUSER NOBYPASSRLS`, DML grants only), while migrations and admin/maintenance use the owner/superuser role. Two DSNs: `DATABASE_URL` (owner, migrations) and `APP_DATABASE_URL` (runtime). The 0002 migration creates the role idempotently; production provisions its password out-of-band.
+
+2. **The policy predicate must be `NULLIF(current_setting('app.user_id', true), '')::uuid`.** A custom GUC reverts to an empty string (not `NULL`) after a transaction-local `set_config`, so on a pooled connection that previously served a request, an unset GUC yields `''` and a bare `::uuid` cast raises. `NULLIF(..., '')` maps the empty string back to `NULL`, preserving default-deny without an error.

@@ -39,3 +39,8 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# One event loop for the whole session so the async engine connection pools stay
+# bound to a single loop across tests (otherwise asyncpg raises "attached to a
+# different loop" when a pooled connection is reused under a new per-test loop).
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"

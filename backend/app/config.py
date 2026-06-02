@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +10,11 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # Admin/owner connection: runs migrations and admin/maintenance work. Superuser.
     database_url: str = "postgresql+asyncpg://ragdog:ragdog@localhost:5432/ragdog"
+    # Runtime app connection: a least-privilege, NON-superuser, NON-BYPASSRLS role so
+    # that Row-Level Security actually applies to request-path queries (see ADR 0005).
+    app_database_url: str = "postgresql+asyncpg://ragdog_app:ragdog_app@localhost:5432/ragdog"
 
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "bge-m3"

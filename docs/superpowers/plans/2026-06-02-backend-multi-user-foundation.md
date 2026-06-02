@@ -365,6 +365,11 @@ git commit -m "feat(backend): add User/AllowedEmail models and user_id ownership
 
 ## Task 4: Migration — schema, data wipe, and RLS policies
 
+> **Implementation delta (found during execution — RLS would otherwise be silently bypassed):**
+> 1. The app must connect as a **non-superuser** role or `FORCE` RLS does nothing (the Docker `postgres` superuser bypasses it). The 0002 migration also creates a least-privilege `ragdog_app` role (idempotent) with DML grants; `app/config.py` gains `app_database_url` and `app/db.py`'s engine uses it, while migrations/admin keep `database_url`. `conftest.py` sets `APP_DATABASE_URL` and truncates via a separate admin engine. See ADR 0005 "Implementation notes."
+> 2. The policy predicate must be `user_id = NULLIF(current_setting('app.user_id', true), '')::uuid` (a custom GUC reverts to `''`, not NULL, after a transaction-local set on a pooled connection; `''::uuid` raises).
+> 3. `pyproject.toml` sets `asyncio_default_fixture_loop_scope = "session"` / `asyncio_default_test_loop_scope = "session"` so the async engine pools stay bound to one loop across tests.
+
 **Files:**
 - Create: `backend/alembic/versions/0002_multi_user_rls.py`
 - Modify: `backend/tests/conftest.py:` (restore full `_USER_TABLES`)
