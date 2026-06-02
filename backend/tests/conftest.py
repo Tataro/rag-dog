@@ -7,6 +7,11 @@ os.environ.setdefault("APP_DATABASE_URL", "postgresql+asyncpg://ragdog_app:ragdo
 os.environ.setdefault("SESSION_JWT_SECRET", "test-secret")
 os.environ.setdefault("GOOGLE_CLIENT_IDS", "test-client.apps.googleusercontent.com")
 os.environ.setdefault("BOOTSTRAP_ADMIN_EMAILS", "boss@example.com")
+os.environ.setdefault("S3_ENDPOINT_URL", "http://localhost:9000")
+os.environ.setdefault("S3_BUCKET", "ragdog-documents-test")
+os.environ.setdefault("S3_ACCESS_KEY", "testing")
+os.environ.setdefault("S3_SECRET_KEY", "testing")
+os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 
 import pytest
 import pytest_asyncio

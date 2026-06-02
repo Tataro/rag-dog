@@ -29,6 +29,13 @@ class Settings(BaseSettings):
 
     upload_dir: Path = Path("./uploads")
 
+    # Object storage (MinIO / S3-compatible) for uploaded Document files.
+    s3_endpoint_url: str = "http://localhost:9000"
+    s3_region: str = "us-east-1"
+    s3_access_key: str = "ragdog"
+    s3_secret_key: str = "ragdog-secret"
+    s3_bucket: str = "ragdog-documents"
+
     telegram_bot_token: str = ""
     telegram_webhook_secret: str = ""
     telegram_allowed_chat_ids: str = ""  # comma-separated

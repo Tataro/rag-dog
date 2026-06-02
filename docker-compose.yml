@@ -30,6 +30,25 @@ services:
     # For best performance, install Ollama natively on macOS instead and skip
     # this service: `brew install ollama && ollama serve`.
 
+  minio:
+    image: minio/minio:latest
+    container_name: ragdog-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-ragdog}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-ragdog-secret}
+    ports:
+      - "${S3_PORT:-9000}:9000"
+      - "${S3_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Run only when you want bots reachable from the internet.
   # Configure ops/cloudflared/config.yml first (see ops/cloudflared/README).
   cloudflared:
@@ -45,3 +64,4 @@ services:
 volumes:
   pgdata:
   ollama:
+  miniodata:
