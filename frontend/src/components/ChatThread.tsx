@@ -1,25 +1,76 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { api, UnauthorizedError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { ChatTurn } from "@/lib/types";
 import { CitationCard } from "./CitationCard";
 
-export function ChatThread() {
+export function ChatThread({
+  conversationId,
+  onConversationChange,
+}: {
+  conversationId: string | null;
+  onConversationChange: (id: string) => void;
+}) {
   const { logout } = useAuth();
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // The conversation currently shown in `turns`. Lets us skip a redundant refetch
+  // after a send (which bumps `conversationId` to a value we already have loaded).
+  const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [turns, busy]);
+
+  // Load (or clear) the thread when the selected conversation changes.
+  useEffect(() => {
+    if (conversationId === loadedIdRef.current) return;
+
+    let cancelled = false;
+
+    (async () => {
+      if (conversationId === null) {
+        loadedIdRef.current = null;
+        if (!cancelled) {
+          setTurns([]);
+          setError(null);
+        }
+        return;
+      }
+
+      try {
+        const convo = await api.getConversation(conversationId);
+        if (cancelled) return;
+        loadedIdRef.current = conversationId;
+        setTurns(
+          convo.messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            citations: m.citations ?? undefined,
+          })),
+        );
+        setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof UnauthorizedError) {
+          logout();
+          return;
+        }
+        setError(err instanceof Error ? err.message : "failed to load conversation");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, logout]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -34,11 +85,9 @@ export function ChatThread() {
 
     try {
       const res = await api.query(text, conversationId);
-      setConversationId(res.conversation_id);
-      setTurns([
-        ...next,
-        { role: "assistant", content: res.answer, citations: res.citations },
-      ]);
+      loadedIdRef.current = res.conversation_id; // we already hold this conversation's turns
+      setTurns([...next, { role: "assistant", content: res.answer, citations: res.citations }]);
+      onConversationChange(res.conversation_id);
     } catch (err) {
       if (err instanceof UnauthorizedError) {
         logout();
@@ -51,16 +100,8 @@ export function ChatThread() {
     }
   }
 
-  function handleReset() {
-    if (busy) return; // don't reset mid-request: a late response would restore the cleared chat
-    if (turns.length > 0 && !confirm("Start a new conversation?")) return;
-    setConversationId(null);
-    setTurns([]);
-    setError(null);
-  }
-
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {turns.length === 0 && (
           <div className="text-center text-zinc-500 italic text-sm mt-12">
@@ -76,9 +117,7 @@ export function ChatThread() {
             thinking…
           </div>
         )}
-        {error && (
-          <div className="text-sm text-rose-600 dark:text-rose-400">{error}</div>
-        )}
+        {error && <div className="text-sm text-rose-600 dark:text-rose-400">{error}</div>}
         <div ref={bottomRef} />
       </div>
 
@@ -86,15 +125,6 @@ export function ChatThread() {
         onSubmit={handleSend}
         className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-end gap-2 bg-white dark:bg-zinc-950"
       >
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={busy}
-          className="p-2 rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-40"
-          title="New conversation"
-        >
-          <RotateCcw size={18} />
-        </button>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
