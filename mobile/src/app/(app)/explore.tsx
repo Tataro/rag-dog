@@ -1,3 +1,4 @@
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -86,6 +87,44 @@ export default function ChatScreen() {
     signOutRef.current = signOut;
   });
 
+  const { c } = useLocalSearchParams<{ c?: string }>();
+  // Tracks which conversation `turns` currently reflects, so we don't refetch a
+  // conversation we already hold (e.g. right after sending a message).
+  const loadedIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = typeof c === 'string' && c.length > 0 ? c : null;
+    if (id === null || id === loadedIdRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const convo = await api.getConversation(id);
+        if (cancelled) return;
+        loadedIdRef.current = id;
+        setConversationId(id);
+        setTurns(
+          convo.messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            citations: m.citations ?? undefined,
+          }))
+        );
+        setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof UnauthorizedError) {
+          signOutRef.current();
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Failed to load conversation');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [c]);
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || busy) return;
@@ -104,6 +143,7 @@ export default function ChatScreen() {
         content: res.answer,
         citations: res.citations,
       };
+      loadedIdRef.current = res.conversation_id;
       setConversationId(res.conversation_id);
       setTurns((prev) => [...prev, assistantTurn]);
     } catch (err) {
@@ -121,6 +161,8 @@ export default function ChatScreen() {
 
   const handleNewChat = useCallback(() => {
     if (busy) return;
+    loadedIdRef.current = null;
+    router.setParams({ c: '' });
     setConversationId(null);
     setTurns([]);
     setError(null);
