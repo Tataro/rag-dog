@@ -286,11 +286,11 @@ git commit -m "feat(mobile): native Google sign-in, auth context, routing gate"
 - Create: `mobile/app/(app)/documents.tsx` (or your authenticated route group)
 - Create: `mobile/src/components/DocumentRow.tsx` (optional)
 
-- [ ] **Step 1: Documents screen** — On focus, `api.listDocuments()` into state; render a `FlatList` of filename + `status` (badge), pull-to-refresh. An "Upload" button calls `expo-document-picker`'s `getDocumentAsync({ type: [...] })`; from the result asset, pass `{ uri, name, mimeType }` to `api.uploadDocument(...)`, then refresh the list. Poll or pull-to-refresh to watch `uploading → processing → ready`. A delete action calls `api.deleteDocument(id)`. Handle `UnauthorizedError` → `useAuth().signOut()`.
+- [x] **Step 1: Documents screen** — On focus, `api.listDocuments()` into state; render a `FlatList` of filename + `status` (badge), pull-to-refresh. An "Upload" button calls `expo-document-picker`'s `getDocumentAsync({ type: [...] })`; from the result asset, pass `{ uri, name, mimeType }` to `api.uploadDocument(...)`, then refresh the list. Poll or pull-to-refresh to watch `uploading → processing → ready`. A delete action calls `api.deleteDocument(id)`. Handle `UnauthorizedError` → `useAuth().signOut()`.
 
-- [ ] **Step 2: Verify** — `npx tsc --noEmit`, `pnpm test`. On the dev build: pick a PDF/markdown, confirm it uploads and reaches `ready`, appears in the web app's list for the same user (cross-client check), and delete works.
+- [x] **Step 2: Verify** — `npx tsc --noEmit`, `pnpm test`. On the dev build: pick a PDF/markdown, confirm it uploads and reaches `ready`, appears in the web app's list for the same user (cross-client check), and delete works.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add mobile/app mobile/src/components
 git commit -m "feat(mobile): documents screen with upload, status, delete"
