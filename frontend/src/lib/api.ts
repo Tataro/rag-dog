@@ -1,5 +1,13 @@
 import { loadToken } from "./auth-storage";
-import type { AllowedEmail, DocumentOut, LoginResponse, QueryResponse, User } from "./types";
+import type {
+  AllowedEmail,
+  ConversationDetail,
+  ConversationOut,
+  DocumentOut,
+  LoginResponse,
+  QueryResponse,
+  User,
+} from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
@@ -53,6 +61,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text, conversation_id: conversationId }),
     }),
+
+  listConversations: () => http<ConversationOut[]>("/api/conversations"),
+  getConversation: (id: string) => http<ConversationDetail>(`/api/conversations/${id}`),
 
   listAllowlist: () => http<AllowedEmail[]>("/api/admin/allowlist"),
   addAllowedEmail: (email: string) =>

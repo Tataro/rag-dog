@@ -23,4 +23,20 @@ describe("api client", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 401 })));
     await expect(api.listDocuments()).rejects.toBeInstanceOf(UnauthorizedError);
   });
+
+  it("listConversations attaches the bearer token", async () => {
+    saveAuth("jwt-xyz", user);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200, headers: { "content-type": "application/json" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await api.listConversations();
+    const headers = new Headers(fetchMock.mock.calls[0][1].headers);
+    expect(headers.get("authorization")).toBe("Bearer jwt-xyz");
+  });
+
+  it("getConversation throws UnauthorizedError on 401", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 401 })));
+    await expect(api.getConversation("c1")).rejects.toBeInstanceOf(UnauthorizedError);
+  });
 });

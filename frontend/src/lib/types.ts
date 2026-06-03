@@ -34,6 +34,27 @@ export interface ChatTurn {
   citations?: Citation[];
 }
 
+export interface ConversationOut {
+  id: string;
+  preview: string;
+  created_at: string;
+  last_message_at: string;
+}
+
+export interface MessageOut {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations: Citation[] | null;
+  created_at: string;
+}
+
+export interface ConversationDetail {
+  id: string;
+  created_at: string;
+  messages: MessageOut[];
+}
+
 export interface User {
   id: string;
   email: string;
