@@ -40,7 +40,11 @@ async def list_conversations(
 
     out: list[ConversationOut] = []
     for cid, created_at, preview, last_message_at in rows:
+        # first_user_msg is NULL when a conversation has only assistant messages (currently
+        # impossible, but defensible); fall back to empty string so the rest of the logic
+        # is branch-free.
         preview = preview or ""
+        # _PREVIEW_LEN is inclusive of the trailing ellipsis character.
         if len(preview) > _PREVIEW_LEN:
             preview = preview[: _PREVIEW_LEN - 1] + "…"
         out.append(
@@ -67,7 +71,11 @@ async def get_conversation(
     stmt = (
         select(Message)
         .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at.asc())
+        # Both messages of a turn are written in one transaction, so server_default
+        # func.now() gives them the SAME created_at. role.desc() breaks the tie
+        # deterministically ("user" > "assistant" → user first). Relies on there being
+        # exactly these two roles in `messages`.
+        .order_by(Message.created_at.asc(), Message.role.desc())
     )
     messages = (await session.execute(stmt)).scalars().all()
     return ConversationDetail(

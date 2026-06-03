@@ -78,6 +78,18 @@ async def test_detail_returns_messages_in_order(client, fake_google, fake_llm):
 
 
 @pytest.mark.asyncio
+async def test_list_preview_truncated_to_80(client, fake_google, fake_llm):
+    h = await _login(client, "boss@example.com")
+    long_text = "x" * 100
+    await client.post("/api/query", json={"text": long_text}, headers=h)
+    body = (await client.get("/api/conversations", headers=h)).json()
+    preview = body[0]["preview"]
+    assert len(preview) == 80
+    assert preview.endswith("…")
+    assert preview[:-1] == "x" * 79
+
+
+@pytest.mark.asyncio
 async def test_other_user_cannot_read_conversation(client, fake_google, fake_llm):
     h1 = await _login(client, "boss@example.com")
     cid = (await client.post("/api/query", json={"text": "hi"}, headers=h1)).json()["conversation_id"]
