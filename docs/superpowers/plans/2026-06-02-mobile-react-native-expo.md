@@ -304,11 +304,11 @@ git commit -m "feat(mobile): documents screen with upload, status, delete"
 - Create: `mobile/app/(app)/chat.tsx`
 - Create: `mobile/src/components/Citation.tsx` (optional)
 
-- [ ] **Step 1: Chat screen** — Keep `conversationId: string | null` in state (starts `null`) and a list of turns. On send: optimistic append of the user turn, `api.query(text, conversationId)`, append the assistant answer + citations, `setConversationId(resp.conversation_id)`. A "New chat" control resets `conversationId` to `null` and clears turns. Render citations as tappable cards showing `filename` + `snippet` (+ page/section). Handle `UnauthorizedError` → `signOut()`. Use a `KeyboardAvoidingView` + `FlatList` (inverted or auto-scroll to bottom).
+- [x] **Step 1: Chat screen** — Keep `conversationId: string | null` in state (starts `null`) and a list of turns. On send: optimistic append of the user turn, `api.query(text, conversationId)`, append the assistant answer + citations, `setConversationId(resp.conversation_id)`. A "New chat" control resets `conversationId` to `null` and clears turns. Render citations as tappable cards showing `filename` + `snippet` (+ page/section). Handle `UnauthorizedError` → `signOut()`. Use a `KeyboardAvoidingView` + `FlatList` (inverted or auto-scroll to bottom).
 
-- [ ] **Step 2: Verify** — `npx tsc --noEmit`, `pnpm test`. On the dev build: ask a question about an uploaded doc, get an answer with at least one citation; a follow-up reuses the same `conversation_id`; "New chat" starts fresh.
+- [x] **Step 2: Verify** — `npx tsc --noEmit`, `pnpm test`. On the dev build: ask a question about an uploaded doc, get an answer with at least one citation; a follow-up reuses the same `conversation_id`; "New chat" starts fresh.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add mobile/app mobile/src/components
 git commit -m "feat(mobile): chat screen with conversations and citations"

@@ -1,180 +1,370 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
+import { api, UnauthorizedError } from '@/lib/api';
 import { useTheme } from '@/hooks/use-theme';
+import type { Citation } from '@/lib/types';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
+type Turn = {
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: Citation[];
+};
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+type CitationCardProps = {
+  citation: Citation;
+};
+
+function CitationCard({ citation }: CitationCardProps) {
+  const meta: string[] = [citation.filename];
+  if (citation.page !== null) meta.push(`p. ${citation.page}`);
+  if (citation.section !== null) meta.push(citation.section);
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <ThemedView type="backgroundElement" style={styles.citationCard}>
+      <ThemedText type="smallBold" numberOfLines={1}>
+        [{citation.marker}] {meta.join(' · ')}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary" numberOfLines={3}>
+        {citation.snippet}
+      </ThemedText>
+    </ThemedView>
+  );
+}
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+type TurnBubbleProps = {
+  turn: Turn;
+};
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
+function TurnBubble({ turn }: TurnBubbleProps) {
+  const isUser = turn.role === 'user';
+  return (
+    <View style={[styles.turnContainer, isUser ? styles.turnUser : styles.turnAssistant]}>
+      <ThemedView
+        type={isUser ? 'backgroundSelected' : 'backgroundElement'}
+        style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
+        <ThemedText type="default">{turn.content}</ThemedText>
       </ThemedView>
-    </ScrollView>
+      {!isUser && turn.citations && turn.citations.length > 0 && (
+        <View style={styles.citationList}>
+          {turn.citations.map((c) => (
+            <CitationCard key={c.chunk_id} citation={c} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+export default function ChatScreen() {
+  const { signOut } = useAuth();
+  const theme = useTheme();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const flatListRef = useRef<FlatList<Turn>>(null);
+
+  // Keep a stable ref to signOut so async callbacks don't capture stale closure
+  const signOutRef = useRef(signOut);
+  useEffect(() => {
+    signOutRef.current = signOut;
+  });
+
+  const handleSend = useCallback(async () => {
+    const text = input.trim();
+    if (!text || busy) return;
+
+    setInput('');
+    setError(null);
+    setBusy(true);
+
+    const userTurn: Turn = { role: 'user', content: text };
+    setTurns((prev) => [...prev, userTurn]);
+
+    try {
+      const res = await api.query(text, conversationId);
+      const assistantTurn: Turn = {
+        role: 'assistant',
+        content: res.answer,
+        citations: res.citations,
+      };
+      setConversationId(res.conversation_id);
+      setTurns((prev) => [...prev, assistantTurn]);
+    } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        signOutRef.current();
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      // Remove the optimistically added user turn on error
+      setTurns((prev) => prev.slice(0, -1));
+    } finally {
+      setBusy(false);
+    }
+  }, [input, busy, conversationId]);
+
+  const handleNewChat = useCallback(() => {
+    if (busy) return;
+    setConversationId(null);
+    setTurns([]);
+    setError(null);
+    setInput('');
+  }, [busy]);
+
+  // Auto-scroll to bottom when turns change
+  useEffect(() => {
+    if (turns.length > 0) {
+      // Use a small delay so layout is complete before scrolling
+      const timeout = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [turns]);
+
+  const renderEmpty = () => (
+    <ThemedView style={styles.emptyContainer}>
+      <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
+        Ask a question about your documents.
+      </ThemedText>
+    </ThemedView>
+  );
+
+  const renderItem = useCallback(({ item }: { item: Turn }) => <TurnBubble turn={item} />, []);
+
+  const keyExtractor = useCallback((_: Turn, index: number) => String(index), []);
+
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="subtitle">Chat</ThemedText>
+          <Pressable
+            onPress={handleNewChat}
+            disabled={busy || turns.length === 0}
+            style={({ pressed }) => [
+              styles.newChatButton,
+              (busy || turns.length === 0) && styles.newChatButtonDisabled,
+              pressed && styles.pressed,
+            ]}
+            accessibilityLabel="New chat"
+            accessibilityRole="button">
+            <ThemedText type="small" themeColor="textSecondary">
+              New chat
+            </ThemedText>
+          </Pressable>
+        </ThemedView>
+
+        {error && (
+          <ThemedView type="backgroundElement" style={styles.errorBanner}>
+            <ThemedText type="small" style={styles.errorText}>
+              {error}
+            </ThemedText>
+            <Pressable onPress={() => setError(null)}>
+              <ThemedText type="small" style={styles.dismissText}>
+                Dismiss
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+        )}
+
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}>
+          <FlatList<Turn>
+            ref={flatListRef}
+            data={turns}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            ListEmptyComponent={renderEmpty}
+            contentContainerStyle={styles.listContent}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            onContentSizeChange={() => {
+              if (turns.length > 0) {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }
+            }}
+          />
+
+          <ThemedView type="backgroundElement" style={styles.inputRow}>
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Ask a question…"
+              placeholderTextColor={theme.textSecondary}
+              multiline
+              maxLength={4000}
+              editable={!busy}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+              accessibilityLabel="Message input"
+            />
+            <Pressable
+              onPress={handleSend}
+              disabled={busy || !input.trim()}
+              style={({ pressed }) => [
+                styles.sendButton,
+                (busy || !input.trim()) && styles.sendButtonDisabled,
+                pressed && styles.pressed,
+              ]}
+              accessibilityLabel="Send message"
+              accessibilityRole="button">
+              {busy ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <ThemedText type="smallBold" style={styles.sendText}>
+                  Send
+                </ThemedText>
+              )}
+            </Pressable>
+          </ThemedView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  container: {
     flex: 1,
-  },
-  contentContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  container: {
+  safeArea: {
+    flex: 1,
     maxWidth: MaxContentWidth,
-    flexGrow: 1,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.three,
   },
-  titleContainer: {
-    gap: Spacing.three,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingVertical: Spacing.three,
   },
-  centerText: {
-    textAlign: 'center',
+  newChatButton: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Spacing.three,
+  },
+  newChatButtonDisabled: {
+    opacity: 0.4,
   },
   pressed: {
     opacity: 0.7,
   },
-  linkButton: {
+  errorBanner: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+    marginBottom: Spacing.two,
+  },
+  errorText: {
+    color: '#ef4444',
+    flex: 1,
+  },
+  dismissText: {
+    color: '#3c87f7',
+    marginLeft: Spacing.two,
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: Spacing.three,
+  },
+  separator: {
+    height: Spacing.three,
+  },
+  emptyContainer: {
+    flex: 1,
     justifyContent: 'center',
-    gap: Spacing.one,
     alignItems: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
   },
-  collapsibleContent: {
-    alignItems: 'center',
+  emptyText: {
+    textAlign: 'center',
   },
-  imageTutorial: {
+  turnContainer: {
     width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
   },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  turnUser: {
+    alignItems: 'flex-end',
+  },
+  turnAssistant: {
+    alignItems: 'flex-start',
+  },
+  bubble: {
+    maxWidth: '85%',
+    padding: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  bubbleUser: {
+    borderBottomRightRadius: Spacing.one,
+  },
+  bubbleAssistant: {
+    borderBottomLeftRadius: Spacing.one,
+  },
+  citationList: {
+    marginTop: Spacing.two,
+    gap: Spacing.two,
+    width: '100%',
+  },
+  citationCard: {
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+    gap: Spacing.one,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    borderRadius: Spacing.three,
+    padding: Spacing.two,
+    marginTop: Spacing.two,
+    gap: Spacing.two,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 22,
+    maxHeight: 120,
+    paddingVertical: Spacing.one,
+  },
+  sendButton: {
+    backgroundColor: '#3c87f7',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+    minWidth: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendText: {
+    color: '#ffffff',
   },
 });
