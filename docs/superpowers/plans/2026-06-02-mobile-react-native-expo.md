@@ -20,14 +20,14 @@
 
 **Files:** new `mobile/` project tree.
 
-- [ ] **Step 1: Create the app** — From the repo root:
+- [x] **Step 1: Create the app** — From the repo root:
 ```bash
 cd /Users/kittitatupaphong/Codes/github.com/tataro/rag-dog
 pnpm create expo-app@latest mobile --template
 ```
 Choose the TypeScript + expo-router template (the default "Navigation (TypeScript)" template). Confirm `mobile/app/` exists (expo-router file-based routing). Verify the version: `cd mobile && npx expo --version`.
 
-- [ ] **Step 2: Add dependencies** — Use `npx expo install` (it picks SDK-compatible versions; do NOT hand-pin):
+- [x] **Step 2: Add dependencies** — Use `npx expo install` (it picks SDK-compatible versions; do NOT hand-pin):
 ```bash
 cd mobile
 npx expo install expo-secure-store expo-document-picker expo-constants
@@ -39,7 +39,7 @@ pnpm add -D jest jest-expo @testing-library/react-native @types/jest
 ```
 Add to `mobile/package.json` `"scripts"`: `"test": "jest"`, and a `"jest"` field: `{ "preset": "jest-expo" }`.
 
-- [ ] **Step 3: Configure the Google sign-in config plugin** — In `mobile/app.json` (or `app.config.ts`), add `@react-native-google-signin/google-signin` to `plugins` and set the iOS URL scheme per the **installed library docs** (read `mobile/node_modules/@react-native-google-signin/google-signin/README.md`). Also add an `extra` block for runtime config consumed via `expo-constants`:
+- [x] **Step 3: Configure the Google sign-in config plugin** — In `mobile/app.json` (or `app.config.ts`), add `@react-native-google-signin/google-signin` to `plugins` and set the iOS URL scheme per the **installed library docs** (read `mobile/node_modules/@react-native-google-signin/google-signin/README.md`). Also add an `extra` block for runtime config consumed via `expo-constants`:
 ```jsonc
 {
   "expo": {
@@ -54,9 +54,9 @@ Add to `mobile/package.json` `"scripts"`: `"test": "jest"`, and a `"jest"` field
 ```
 > CONSULT the library README for the exact plugin options and whether `iosUrlScheme` must be passed as a plugin arg in this version.
 
-- [ ] **Step 4: Verify the skeleton runs** — `cd mobile && npx expo start` boots the dev server without errors (you don't need a device yet; just confirm no config errors). Then `pnpm test` (jest-expo) — the template may ship a sample test; confirm the runner works (or that there are simply no tests yet).
+- [x] **Step 4: Verify the skeleton runs** — `cd mobile && npx expo start` boots the dev server without errors (you don't need a device yet; just confirm no config errors). Then `pnpm test` (jest-expo) — the template may ship a sample test; confirm the runner works (or that there are simply no tests yet).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add mobile
 git commit -m "feat(mobile): scaffold Expo app (router, secure-store, google-signin, jest)"
