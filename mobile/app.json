@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "rag-dog",
+    "slug": "rag-dog",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "rag-dog",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"

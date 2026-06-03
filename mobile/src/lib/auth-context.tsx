@@ -90,7 +90,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   async function signOut(): Promise<void> {
-    await clearToken();
+    // Both clears are best-effort: a SecureStore/native failure must not leave the
+    // user stuck in the authenticated UI — always fall through to setUser(null).
+    await clearToken().catch(() => {});
     await GoogleSignin.signOut().catch(() => {});
     setUser(null);
   }

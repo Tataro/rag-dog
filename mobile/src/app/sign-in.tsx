@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth-context';
+import { Colors } from '@/constants/theme';
 
 export default function SignInScreen() {
   const { signIn } = useAuth();
+  const scheme = useColorScheme();
+  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,9 +24,11 @@ export default function SignInScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>RAG Dog</Text>
-      <Text style={styles.subtitle}>Your personal document assistant</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>RAG Dog</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        Your personal document assistant
+      </Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -46,18 +51,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
     padding: 24,
     gap: 16,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#000000',
   },
   subtitle: {
     fontSize: 16,
-    color: '#60646C',
     marginBottom: 16,
   },
   error: {

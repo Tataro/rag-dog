@@ -322,13 +322,13 @@ git commit -m "feat(mobile): chat screen with conversations and citations"
 - Create/modify: `mobile/eas.json` (dev build profile), `mobile/README.md`
 - Modify: root `README.md` (mention the mobile app)
 
-- [ ] **Step 1: EAS config** — Run `cd mobile && npx eas build:configure` (or hand-write `eas.json` per the installed EAS docs) with at least a `development` profile that builds a dev client. Document that the Google native module requires a dev/EAS build, not Expo Go.
+- [x] **Step 1: EAS config** — Run `cd mobile && npx eas build:configure` (or hand-write `eas.json` per the installed EAS docs) with at least a `development` profile that builds a dev client. Document that the Google native module requires a dev/EAS build, not Expo Go.
 
-- [ ] **Step 2: `mobile/README.md`** — Document: required `extra` config (`apiBase` as the machine's LAN IP, `googleWebClientId`, `googleIosClientId`); that `googleWebClientId` must be in the backend `GOOGLE_CLIENT_IDS`; iOS/Android OAuth client setup + reversed-client-id URL scheme; how to run a dev build; and that the user's email must be on the backend allowlist (bootstrap admin or admin-added) to sign in.
+- [x] **Step 2: `mobile/README.md`** — Document: required `extra` config (`apiBase` as the machine's LAN IP, `googleWebClientId`, `googleIosClientId`); that `googleWebClientId` must be in the backend `GOOGLE_CLIENT_IDS`; iOS/Android OAuth client setup + reversed-client-id URL scheme; how to run a dev build; and that the user's email must be on the backend allowlist (bootstrap admin or admin-added) to sign in.
 
-- [ ] **Step 3: Final pass** — `cd mobile && pnpm test && npx tsc --noEmit && npx expo lint` (if the template includes a lint script). All clean. Walk the full flow on a dev build: sign in → upload → chat with citation → sign out → relaunch (still requires sign-in after sign-out).
+- [x] **Step 3: Final pass** — `cd mobile && pnpm test && npx tsc --noEmit && npx expo lint` (if the template includes a lint script). All clean. Walk the full flow on a dev build: sign in → upload → chat with citation → sign out → relaunch (still requires sign-in after sign-out).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add mobile/eas.json mobile/README.md README.md
 git commit -m "feat(mobile): EAS dev build config and docs"

@@ -74,6 +74,13 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com
 
 > **Important:** the same web client ID must also appear in the backend's `GOOGLE_CLIENT_IDS` list (comma-separated) so the backend will accept tokens issued by it.
 
+## Mobile app
+
+A React Native (Expo SDK 56) client lives in [`mobile/`](mobile/). It provides Google Sign-In, document upload, and chat against the same FastAPI backend.
+
+- A **dev build** is required (not Expo Go) — see [`mobile/README.md`](mobile/README.md) for setup.
+- Configure `apiBase`, `googleWebClientId`, and `googleIosClientId` in `mobile/app.json` before building.
+
 ## Out of scope for v1
 
 OCR, hybrid retrieval, reranking, multi-user auth, document tags, streaming responses, production job queue. See the [plan](.claude/../README.md) for details.
