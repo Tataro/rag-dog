@@ -28,6 +28,29 @@ class Citation(BaseModel):
     snippet: str
 
 
+class ConversationOut(BaseModel):
+    id: UUID
+    preview: str
+    created_at: datetime
+    last_message_at: datetime
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    role: str
+    content: str
+    citations: list[Citation] | None = None
+    created_at: datetime
+
+
+class ConversationDetail(BaseModel):
+    id: UUID
+    created_at: datetime
+    messages: list[MessageOut]
+
+
 class QueryRequest(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
     conversation_id: UUID | None = None  # None starts a new conversation

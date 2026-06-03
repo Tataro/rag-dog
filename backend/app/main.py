@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import admin, auth, documents, query
+from .api import admin, auth, conversations, documents, query
 from .config import settings
 
 logging.basicConfig(
@@ -39,6 +39,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(query.router, prefix="/api/query", tags=["query"])
+app.include_router(conversations.router, prefix="/api/conversations", tags=["conversations"])
 
 # Telegram/Line bots are descoped for the multi-user launch (ADR 0004): they need a
 # Google<->chat-id account-linking design. The channel code stays on disk, unwired.

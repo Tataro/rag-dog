@@ -11,3 +11,6 @@ export interface Citation {
 export interface QueryResponse { answer: string; citations: Citation[]; conversation_id: string; }
 export interface User { id: string; email: string; name: string | null; picture: string | null; is_admin: boolean; }
 export interface LoginResponse { session_token: string; user: User; }
+export interface ConversationOut { id: string; preview: string; created_at: string; last_message_at: string; }
+export interface MessageOut { id: string; role: "user" | "assistant"; content: string; citations: Citation[] | null; created_at: string; }
+export interface ConversationDetail { id: string; created_at: string; messages: MessageOut[]; }
