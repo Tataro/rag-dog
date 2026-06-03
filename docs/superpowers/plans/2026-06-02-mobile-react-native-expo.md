@@ -70,7 +70,7 @@ git commit -m "feat(mobile): scaffold Expo app (router, secure-store, google-sig
 - Create: `mobile/src/lib/config.ts`, `mobile/src/lib/auth-storage.ts`, `mobile/src/lib/api.ts`, `mobile/src/lib/types.ts`
 - Test: `mobile/src/lib/auth-storage.test.ts`, `mobile/src/lib/api.test.ts`
 
-- [ ] **Step 1: Types + config**
+- [x] **Step 1: Types + config**
 
 `mobile/src/lib/types.ts` — mirror the backend contract:
 ```ts
@@ -100,7 +100,7 @@ export const config = {
 };
 ```
 
-- [ ] **Step 2: Failing test for the token store** (mock `expo-secure-store`)
+- [x] **Step 2: Failing test for the token store** (mock `expo-secure-store`)
 
 `mobile/src/lib/auth-storage.test.ts`:
 ```ts
@@ -124,9 +124,9 @@ test("round-trips the token", async () => {
 });
 ```
 
-- [ ] **Step 3: Run (red)** — `cd mobile && pnpm test` → FAIL.
+- [x] **Step 3: Run (red)** — `cd mobile && pnpm test` → FAIL.
 
-- [ ] **Step 4: Implement the secure token store**
+- [x] **Step 4: Implement the secure token store**
 
 `mobile/src/lib/auth-storage.ts`:
 ```ts
@@ -146,7 +146,7 @@ export async function clearToken(): Promise<void> {
 ```
 > CONSULT `expo-secure-store` docs for any required options (e.g. `keychainAccessible`) for your distribution target.
 
-- [ ] **Step 5: Failing test for the API client**
+- [x] **Step 5: Failing test for the API client**
 
 `mobile/src/lib/api.test.ts`:
 ```ts
@@ -180,9 +180,9 @@ test("throws UnauthorizedError on 401", async () => {
 });
 ```
 
-- [ ] **Step 6: Run (red)** — `pnpm test` → FAIL.
+- [x] **Step 6: Run (red)** — `pnpm test` → FAIL.
 
-- [ ] **Step 7: Implement the API client**
+- [x] **Step 7: Implement the API client**
 
 `mobile/src/lib/api.ts`:
 ```ts
@@ -231,9 +231,9 @@ export const api = {
 ```
 > NOTE the RN-specific multipart file shape (`{ uri, name, type }`) — this is the React Native `FormData` convention, NOT a browser `File`. Verify against the installed RN version if upload fails.
 
-- [ ] **Step 8: Run (green)** — `pnpm test` → PASS (all). Then `npx tsc --noEmit` — clean.
+- [x] **Step 8: Run (green)** — `pnpm test` → PASS (all). Then `npx tsc --noEmit` — clean.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 ```bash
 git add mobile/src/lib mobile/package.json
 git commit -m "feat(mobile): config, secure token store, authenticated API client"
