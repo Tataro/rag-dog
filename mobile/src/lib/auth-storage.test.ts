@@ -5,6 +5,7 @@ jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn(async (k: string) => { delete store[k]; }),
 }));
 
+// eslint-disable-next-line import/first
 import { clearToken, loadToken, saveToken } from "./auth-storage";
 
 beforeEach(() => { for (const k of Object.keys(store)) delete store[k]; });

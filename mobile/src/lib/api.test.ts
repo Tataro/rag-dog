@@ -6,7 +6,9 @@ jest.mock("expo-secure-store", () => ({
 }));
 jest.mock("expo-constants", () => ({ expoConfig: { extra: { apiBase: "http://test" } } }));
 
+// eslint-disable-next-line import/first
 import { api, UnauthorizedError } from "./api";
+// eslint-disable-next-line import/first
 import { saveToken } from "./auth-storage";
 
 beforeEach(() => { for (const k of Object.keys(store)) delete store[k]; });

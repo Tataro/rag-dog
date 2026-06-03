@@ -250,7 +250,7 @@ git commit -m "feat(mobile): config, secure token store, authenticated API clien
 - Modify: `mobile/app/_layout.tsx` (wrap in provider; gate)
 - Create: `mobile/app/login.tsx` (or gate within the layout)
 
-- [ ] **Step 1: Auth context** — `mobile/src/lib/auth-context.tsx`: a React context exposing `{ user, ready, signIn(), signOut() }`. On mount, read `loadToken()`; if present, call `api.me()` to validate (clear on `UnauthorizedError`). `signIn()`:
+- [x] **Step 1: Auth context** — `mobile/src/lib/auth-context.tsx`: a React context exposing `{ user, ready, signIn(), signOut() }`. On mount, read `loadToken()`; if present, call `api.me()` to validate (clear on `UnauthorizedError`). `signIn()`:
 ```ts
 // pseudocode — verify exact calls against the installed library:
 GoogleSignin.configure({ webClientId: config.googleWebClientId, iosClientId: config.googleIosClientId });
@@ -262,15 +262,15 @@ setUser(user);
 ```
 `signOut()`: `await clearToken(); await GoogleSignin.signOut().catch(()=>{}); setUser(null);`. Handle the case where `idToken` is null (configuration error → surface a clear message).
 
-- [ ] **Step 2: Gate + routing** — Using `expo-router`: in `mobile/app/_layout.tsx`, wrap the navigator in `<AuthProvider>` and redirect based on auth state (unauthenticated → a `login` screen with a Google button; authenticated → the tabs/stack). **Follow the installed expo-router docs** for the current redirect/guard pattern (e.g. `<Redirect>`, `useRouter`, or a protected group). Keep a simple login screen that calls `useAuth().signIn()`.
+- [x] **Step 2: Gate + routing** — Using `expo-router`: in `mobile/app/_layout.tsx`, wrap the navigator in `<AuthProvider>` and redirect based on auth state (unauthenticated → a `login` screen with a Google button; authenticated → the tabs/stack). **Follow the installed expo-router docs** for the current redirect/guard pattern (e.g. `<Redirect>`, `useRouter`, or a protected group). Keep a simple login screen that calls `useAuth().signIn()`.
 
-- [ ] **Step 3: Verify on a dev build** — The Google native module needs a dev build (not Expo Go):
+- [x] **Step 3: Verify on a dev build** — The Google native module needs a dev build (not Expo Go):
 ```bash
 cd mobile && npx expo run:ios   # or run:android, or an EAS dev build
 ```
 Confirm: launching shows the login screen; Google sign-in completes; the app lands on the authenticated screens; relaunch stays signed in (token in secure-store); sign-out returns to login. If you cannot run a device build in this environment, STOP and report — auth cannot be verified by unit tests alone.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add mobile/src/lib/auth-context.tsx mobile/app
 git commit -m "feat(mobile): native Google sign-in, auth context, routing gate"
