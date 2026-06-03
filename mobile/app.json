@@ -8,7 +8,8 @@
     "scheme": "rag-dog",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.anonymous.rag-dog"
     },
     "android": {
       "adaptiveIcon": {
@@ -39,14 +40,14 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER-REPLACE-WITH-REVERSED-CLIENT-ID"
+          "iosUrlScheme": "com.googleusercontent.apps.732702226175-c4g5rdllpban6bn2g49confmvd7ivso3"
         }
       ]
     ],
     "extra": {
       "apiBase": "http://localhost:8000",
-      "googleWebClientId": "placeholder.apps.googleusercontent.com",
-      "googleIosClientId": "placeholder.apps.googleusercontent.com"
+      "googleWebClientId": "732702226175-skiias8saie3piaif2uko46dgu4bcfak.apps.googleusercontent.com",
+      "googleIosClientId": "732702226175-c4g5rdllpban6bn2g49confmvd7ivso3.apps.googleusercontent.com"
     },
     "experiments": {
       "typedRoutes": true,
