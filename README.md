@@ -1,30 +1,34 @@
 # rag-dog
 
-Single-user, local-first RAG (Retrieval-Augmented Generation). Upload documents through a Next.js web UI; query them from the web, Telegram, or Line. All inference runs locally via Ollama.
+Multi-user, self-hosted RAG (Retrieval-Augmented Generation). Users sign in with Google, upload documents, and query them from a Next.js web app or a React Native (Expo) mobile app. Each user's documents and conversations are private — isolated at the database level with Postgres Row-Level Security. All inference runs on your own hardware via Ollama.
 
-Designed for a MacBook M4 (36 GB), portable to a bigger GPU box later.
+Developed on a MacBook M4 (36 GB); runs in production on self-hosted GPU servers.
 
 ## Stack
 
-- **Frontend**: Next.js 15 (App Router, TS, Tailwind) — localhost only
-- **Backend**: Python 3.12 + FastAPI
-- **Vector DB**: Postgres 16 + pgvector (HNSW)
+- **Web**: Next.js 16 (App Router, TS, Tailwind) — authenticated client
+- **Mobile**: React Native + Expo (SDK 56) — see [`mobile/`](mobile/)
+- **Backend**: Python 3.12 + FastAPI — authenticated HTTPS API
+- **Auth**: Google sign-in, closed invite/admin allowlist, own session JWT
+- **Vector DB**: Postgres 16 + pgvector (HNSW); per-user isolation via Row-Level Security
 - **Embeddings**: `bge-m3` (multilingual, 1024-dim) via Ollama
 - **Generation**: `qwen2.5:14b-instruct` (Q4, ~9 GB) via Ollama
-- **Bots**: Telegram + Line, exposed via Cloudflare Tunnel (webhooks only)
 - **Object storage**: MinIO (S3-compatible) for uploaded document files
 
-See [`docs/adr/`](docs/adr) for the reasoning behind each choice.
+> The original single-user assumption and the Telegram/Line bots have been superseded by the multi-user pivot — the bots are descoped pending a Google↔chat-id account-linking design. See [`docs/adr/`](docs/adr) (notably 0004) for the reasoning behind each choice.
 
 ## Quick start
 
 ```bash
 # 1. Configuration
 cp .env.example .env
-# Edit .env if you want different ports/credentials.
+# Set at minimum: GOOGLE_CLIENT_IDS (your Google OAuth web client ID),
+# BOOTSTRAP_ADMIN_EMAILS (your email — becomes the first admin), and a strong
+# SESSION_JWT_SECRET. DATABASE_URL is the owner/migration role; APP_DATABASE_URL
+# is the least-privilege runtime role (ragdog_app) that RLS applies to.
 
-# 2. Postgres (with pgvector) via Docker
-docker compose up -d postgres
+# 2. Postgres (pgvector) + MinIO via Docker
+docker compose up -d postgres minio
 
 # 3. Ollama — install natively on macOS for GPU acceleration:
 brew install ollama
@@ -34,29 +38,36 @@ brew services start ollama
 # 4. Pull models (~10 GB, one-time)
 ./ops/ollama/pull-models.sh
 
-# 5. Backend
+# 5. Backend — `alembic upgrade head` creates the users/allowed_emails tables,
+#    the FORCE-RLS policies, and the least-privilege `ragdog_app` role.
 cd backend
 uv sync
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --port 8000
 
-# 6. Frontend (in another terminal)
+# 6. Web app (in another terminal) — see "Web UI environment variables" below
 cd frontend
 pnpm install
 pnpm dev   # http://localhost:3000
 
-# 7. Cloudflare Tunnel — only when you want bots reachable
-# See ops/cloudflared/README.md
+# 7. First login: sign in with a BOOTSTRAP_ADMIN_EMAILS account (auto-provisioned
+#    as admin), then add colleagues' emails via the in-app Admin screen.
 ```
+
+> In production the backend is a public, authenticated HTTPS API (Google-verified
+> sign-in + the closed allowlist), not a localhost-only service. The old
+> Cloudflare-Tunnel-for-bots setup (ADR 0003) was retired by ADR 0004.
 
 ## Layout
 
 ```
-backend/        FastAPI service (ingestion + retrieval + generation + channels)
-frontend/       Next.js web UI
+backend/        FastAPI service (auth + RLS + ingestion + retrieval + generation)
+                channels/ holds the descoped Telegram/Line adapters (unwired)
+frontend/       Next.js web app (authenticated)
+mobile/         React Native + Expo app
 docs/adr/       Architecture Decision Records
-ops/            Cloudflare Tunnel config, Ollama pull script
-uploads/        (removed) original document files now stored in MinIO object storage
+docs/superpowers/plans/   Implementation plans (backend, MinIO, web, mobile)
+ops/            Ollama pull script, cloudflared config (legacy; bot path retired)
 CONTEXT.md      Domain glossary
 ```
 
@@ -81,6 +92,6 @@ A React Native (Expo SDK 56) client lives in [`mobile/`](mobile/). It provides G
 - A **dev build** is required (not Expo Go) — see [`mobile/README.md`](mobile/README.md) for setup.
 - Configure `apiBase`, `googleWebClientId`, and `googleIosClientId` in `mobile/app.json` before building.
 
-## Out of scope for v1
+## Out of scope (for now)
 
-OCR, hybrid retrieval, reranking, multi-user auth, document tags, streaming responses, production job queue. See the [plan](.claude/../README.md) for details.
+OCR, hybrid retrieval, reranking, document tags, streaming responses, a production job queue, and the Telegram/Line bots (deferred pending a Google↔chat-id account-linking design). Multi-user auth, which was previously out of scope, is now implemented. See [`docs/superpowers/plans/`](docs/superpowers/plans) and [`docs/adr/`](docs/adr) for details.
